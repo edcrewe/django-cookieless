@@ -10,7 +10,11 @@ This package provides a sessions implementation and decorator class for views to
 allow for forms to maintain state without using cookies by posting the session
 id between forms, or via urls.
 
-Note that there are security issues with this, since it is not possible to use
+Django requires cookies to maintain session, and hence for authorisation.
+
+This package is designed to cater for anonymous user session maintenance, without cookies.
+
+WARNING : There are security issues with this, since it is not possible to use
 CSRF protection without either URL rewriting or Cookies to maintain a separate 
 token from that posted in the form.
 
@@ -22,7 +26,7 @@ It is for that purpose this egg was devised.
 
 To ameliorate the security implications, a whitelist of allowed domains or allowed URLs, can be set in the configuration. 
 Usage can also be restricted to SSL only. 
-As a final safety measure handling of get requests can be turned off.
+As a final safety measure handling of GET requests can be turned off.
 
 Please NOTE: It is not advisable to use this package without some form of the above restrictions being in place. 
 
