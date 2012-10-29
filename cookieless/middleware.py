@@ -11,7 +11,7 @@ import re, pdb
 LINKS_RE = r'<a(?P<pre_href>[^>]*?)href=["\'](?P<in_href>[^"\']*?)(?P<anchor>#\S+)?["\'](?P<post_href>[^>]*?)>'
 
 
-class CookielessSessionMiddleware(object)
+class CookielessSessionMiddleware(object):
     """ Django snippets julio carlos and Ivscar 
         http://djangosnippets.org/snippets/1540/
 
