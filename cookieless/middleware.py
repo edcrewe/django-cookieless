@@ -25,7 +25,6 @@ class CookielessSessionMiddleware(object):
     """
 
     def __init__(self):
-
         self._re_links = re.compile(LINKS_RE, re.I)
         self._re_forms = re.compile('</form>', re.I)
 
@@ -42,12 +41,13 @@ class CookielessSessionMiddleware(object):
             if not check post, and get if allowed
         """
         name = settings.SESSION_COOKIE_NAME
-        session_key = request.COOKIES.get(name, None)
-        if request.get('no_cookies', False) or not session_key:
+        session_key = request.COOKIES.get(name, '')
+        no_cookies = request.POST.get('no_cookies', False)
+        if no_cookies or not session_key:
             session_key = request.POST.get(name, None)
-            if settings.COOKIELESS_USE_GET:
+            if getattr(settings, 'COOKIELESS_USE_GET', True):
                 session_key = request.GET.get(name, '')
-            if not self.no_cookies and session_key:
+            if not no_cookies and session_key:
                 request.COOKIES[name] = session_key        
         if session_key:
             engine = import_module(settings.SESSION_ENGINE)
@@ -76,10 +76,10 @@ class CookielessSessionMiddleware(object):
                     expires = cookie_date(expires_time)
                 # Save the session data and refresh the client cookie.
                 request.session.save()
-                if request.get('no_cookies', False): 
+                if request.POST.get('no_cookies', False): 
                     # cookieless - patch setting of cookies
                     response = self.nocookies_response(request, response)
-                else
+                else:
                     response.set_cookie(settings.SESSION_COOKIE_NAME,
                             request.session.session_key, max_age=max_age,
                             expires=expires, domain=settings.SESSION_COOKIE_DOMAIN,
@@ -136,4 +136,5 @@ class CookielessSessionMiddleware(object):
 #    def process_view(self, request, callback, callback_args, callback_kwargs):
 #        if getattr(callback, 'no_cookies', True):
 #            return None
+
 
