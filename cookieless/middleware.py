@@ -1,5 +1,4 @@
-#-*- coding:utf-8 -*-
-import time
+#-*- coding:utf-8 -*-import time
 
 from django.conf import settings
 from django.utils.cache import patch_vary_headers
@@ -36,17 +35,25 @@ class CookielessSessionMiddleware(object):
             patt = '%s&amp;'
         return patt % (url,)
 
+    def _encrypt(self, sessionid):
+        """ Avoid showing plain sessionids """  
+        return sessionid
+
+    def _decrypt(self, sessionid):
+        """ Avoid showing plain sessionids """  
+        return sessionid
+
     def process_request(self, request):
         """ Check if we have the session key from a cookie, 
             if not check post, and get if allowed
         """
         name = settings.SESSION_COOKIE_NAME
         session_key = request.COOKIES.get(name, '')
-        no_cookies = request.POST.get('no_cookies', False)
+        no_cookies = getattr(request, 'no_cookies', False)
         if no_cookies or not session_key:
-            session_key = request.POST.get(name, None)
-            if getattr(settings, 'COOKIELESS_USE_GET', True):
-                session_key = request.GET.get(name, '')
+            session_key = self._decrypt(request.POST.get(name, None))
+            if not session_key and getattr(settings, 'COOKIELESS_USE_GET', True):
+                session_key = self._decrypt(request.GET.get(name, ''))
             if not no_cookies and session_key:
                 request.COOKIES[name] = session_key        
         if session_key:
@@ -55,6 +62,7 @@ class CookielessSessionMiddleware(object):
 
     def process_response(self, request, response):
         """
+        Copied from contrib.session.middleware with no_cookies switch added ...
         If request.session was modified, or if the configuration is to save the
         session every time, save the changes and set a session cookie.
         """
@@ -76,9 +84,13 @@ class CookielessSessionMiddleware(object):
                     expires = cookie_date(expires_time)
                 # Save the session data and refresh the client cookie.
                 request.session.save()
-                if request.POST.get('no_cookies', False): 
+
+                if getattr(request, 'no_cookies', False): 
                     # cookieless - patch setting of cookies
-                    response = self.nocookies_response(request, response)
+                    if getattr(settings, 'COOKIELESS_REWRITE', False):
+                        return self.nocookies_response(request, response)
+                    else:
+                        return response
                 else:
                     response.set_cookie(settings.SESSION_COOKIE_NAME,
                             request.session.session_key, max_age=max_age,
@@ -89,12 +101,13 @@ class CookielessSessionMiddleware(object):
         return response
 
     def nocookies_response(self, request, response):
+        """ Option to rewrite forms and urls to add session automatically """
         name = settings.SESSION_COOKIE_NAME
         session_key = ''
         raise Exception(request.session.id)
-        if not request.path.startswith("/admin")  and request.session.id:
+        if rewrite and request.session.id and not request.path.startswith("/admin"):  
             try:
-                session_key = request.session.id # response.cookies[name].coded_value
+                session_key = self._encrypt(request.session.id) # response.cookies[name].coded_value
                 if type(response) is HttpResponseRedirect:
                     if not session_key: 
                         session_key = ""

@@ -1,3 +1,9 @@
+# Rewrite URLs to add session id for no_cookies decorated views 
+# (if False then all page navigation must be via form posts)
+COOKIELESS_USE_GET = True
+# Rewriting the response automatically rather than use manual <% session_token %> <% session_url %> 
+COOKIELESS_REWRITE = True
+
 # Settings to be used when running unit tests
 # python manage.py test --settings=django-cookieless.test_settings django-cookieless
 
