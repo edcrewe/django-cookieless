@@ -31,6 +31,7 @@ class CookielessSessionMiddleware(object):
         """
         self._re_links = re.compile(LINKS_RE, re.I)
         self._re_forms = re.compile('</form>', re.I)
+
         self.standard_session = SessionMiddleware()
         self.secret = settings.SECRET_KEY[:16]
 
@@ -42,10 +43,10 @@ class CookielessSessionMiddleware(object):
         session_key = request.COOKIES.get(name, '')
         if not session_key:
             session_key = self._decrypt(request.POST.get(name, None))
-            if not session_key and getattr(settings, 'COOKIELESS_USE_GET', True):
+            if not session_key and getattr(settings, 'COOKIELESS_USE_GET', False):
                 session_key = self._decrypt(request.GET.get(name, ''))
-            #if session_key:
-            #    request.COOKIES[name] = session_key        
+            if session_key:
+                request.COOKIES[name] = session_key        
         engine = import_module(settings.SESSION_ENGINE)
         request.session = engine.SessionStore(session_key)
 
@@ -55,13 +56,31 @@ class CookielessSessionMiddleware(object):
         If request.session was modified, or if the configuration is to save the
         session every time, save the changes and set a session cookie.
         """
-        if getattr(request, 'no_cookies', False): 
-            # cookieless - patch setting of cookies
+        if getattr(request, 'no_cookies', False):
+            response.cookies.clear()
+            # cookieless - do same as standard process response
+            #              but dont set the cookie
             if getattr(settings, 'COOKIELESS_REWRITE', False):
-                return self.nocookies_response(request, response)
+                response = self.nocookies_response(request, response)
+            try:
+                accessed = request.session.accessed
+                modified = request.session.modified
+            except AttributeError:
+                pass
             else:
-                return response
+                if modified or settings.SESSION_SAVE_EVERY_REQUEST:
+                    if request.session.get_expire_at_browser_close():
+                        max_age = None
+                        expires = None
+                    else:
+                        max_age = request.session.get_expiry_age()
+                        expires_time = time.time() + max_age
+                        expires = cookie_date(expires_time)
+                # Save the session data and refresh the client cookie.
+                request.session.save()
+            return response
         else:
+            raise Exception('LOST no_cookies')
             return self.standard_session.process_response(request, response)
 
     def _prepare_url(self, url):
@@ -114,10 +133,11 @@ class CookielessSessionMiddleware(object):
                                  )
                 return return_str                                 
 
-            try:
-                response.content = self._re_links.sub(new_url, response.content)
-            except:
-                pass
+            if getattr(settings, 'COOKIELESS_USE_GET', False):            
+                try:
+                    response.content = self._re_links.sub(new_url, response.content)
+                except:
+                    pass
 
             repl_form = '''<div><input type="hidden" name="%s" value="%s" />
                            </div></form>'''

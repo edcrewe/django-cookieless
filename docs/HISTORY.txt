@@ -6,3 +6,11 @@ Changelog
 
 * Initial release
 
+- Django snippets - 
+  http://djangosnippets.org/snippets/1540/
+  Basis of middleware
+- Add simple crypt of sessionid when used in HTML
+- Call standard contrib.sessions.Session if not decorated as no_cookies
+- Add CSRF exempt decorator too to ensure cookie not set by that
+
+  Ed Crewe, julio carlos and Ivscar (snippet), Paul Chakravarti (xteacrypt)
