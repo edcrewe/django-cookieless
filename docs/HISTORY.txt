@@ -1,8 +1,8 @@
 Changelog
 =========
 
-0.1 - Unreleased
-----------------
+0.1 - 4th November 2012
+-----------------------
 
 * Initial release
 
@@ -12,5 +12,8 @@ Changelog
 - Add simple crypt of sessionid when used in HTML
 - Call standard contrib.sessions.Session if not decorated as no_cookies
 - Add CSRF exempt decorator too to ensure cookie not set by that
+- Add templatetags for users who prefer manual adding of session ids
+- Add settings options to configure level of security applied, 
+  e.g. whitelist of refers, no URL rewriting etc.
 
   Ed Crewe, julio carlos and Ivscar (snippet), Paul Chakravarti (xteacrypt)
