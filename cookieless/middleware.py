@@ -1,7 +1,6 @@
 #-*- coding:utf-8 -*-import time
 import re, pdb, time
 
-from urlparse import urlparse
 from django.conf import settings
 from django.utils.cache import patch_vary_headers
 from django.utils.http import cookie_date
@@ -9,7 +8,7 @@ from django.utils.importlib import import_module
 from django.http  import  HttpResponseRedirect
 from django.contrib.sessions.middleware import SessionMiddleware
 # Obscure the session id when passing it around in HTML
-from cookieless.xteacrypt import crypt
+from cookieless.utils import CryptSession
 
 LINKS_RE = r'<a(?P<pre_href>[^>]*?)href=["\'](?P<in_href>[^"\']*?)(?P<anchor>#\S+)?["\'](?P<post_href>[^>]*?)>'
 
@@ -32,9 +31,8 @@ class CookielessSessionMiddleware(object):
         """
         self._re_links = re.compile(LINKS_RE, re.I)
         self._re_forms = re.compile('</form>', re.I)
-
+        self._sesh = CryptSession()
         self.standard_session = SessionMiddleware()
-        self.secret = settings.SECRET_KEY[:16]
 
     def process_request(self, request):
         """ Check if we have the session key from a cookie, 
@@ -43,10 +41,10 @@ class CookielessSessionMiddleware(object):
         name = settings.SESSION_COOKIE_NAME
         session_key = request.COOKIES.get(name, '')
         if not session_key:
-            session_key = self._decrypt(request, 
+            session_key = self._sesh.decrypt(request, 
                                         request.POST.get(name, None))
             if not session_key and getattr(settings, 'COOKIELESS_USE_GET', False):
-                session_key = self._decrypt(request, 
+                session_key = self._sesh.decrypt(request, 
                                             request.GET.get(name, ''))
             if session_key:
                 request.COOKIES[name] = session_key        
@@ -85,63 +83,18 @@ class CookielessSessionMiddleware(object):
         else:
             return self.standard_session.process_response(request, response)
 
-    def _prepare_url(self, url):
-        patt = None
-        if url.find('?') == -1:
-            patt = '%s?'
-        else:
-            patt = '%s&amp;'
-        return patt % (url,)
-
-    def _encrypt(self, request, sessionid):
-        """ Avoid showing plain sessionids """  
-        if not sessionid:
-            return ''
-        secret = self._secret(request)
-        return crypt(secret, sessionid).encode('hex')
-
-    def _decrypt(self, request, sessionid):
-        """ Avoid showing plain sessionids 
-            Optionally require that a referer exists and matches the 
-            whitelist, or reset the session
-        """
-        if not sessionid:
-            return ''
-        secret = self._secret(request)
-        if getattr(settings, 'COOKIELESS_HOSTS', []):
-            referer = request.META.get('HTTP_REFERER', 'None')
-            if referer == 'None':
-                # End session unless a referer is passed
-                return ''
-            url = urlparse(referer)
-            if url.hostname not in settings.COOKIELESS_HOSTS:
-                err = '%s is unauthorised' % url.hostname
-                raise Exception(err)
-        return crypt(secret, sessionid.decode('hex'))
-
-    def _secret(self, request):
-        """ optionally make secret client dependent 
-        """
-        if getattr(settings, 'COOKIELESS_CLIENT_ID', False):
-            ip = request.META['REMOTE_ADDR']
-            agent = request.META['HTTP_USER_AGENT']
-            secret = crypt(self.secret, agent + ip)[:16]
-            return secret
-        else:
-            return self.secret
-
     def nocookies_response(self, request, response):
         """ Option to rewrite forms and urls to add session automatically """
         name = settings.SESSION_COOKIE_NAME
         session_key = ''
         if request.session.session_key and not request.path.startswith("/admin"):  
-            session_key = self._encrypt(request, request.session.session_key) 
+            session_key = self._sesh.encrypt(request, request.session.session_key) 
 
             if type(response) is HttpResponseRedirect:
                 if not session_key: 
                     session_key = ""
                 redirect_url = [x[1] for x in response.items() if x[0] == "Location"][0]
-                redirect_url = self._prepare_url(redirect_url)
+                redirect_url = self._sesh.prepare_url(redirect_url)
                 return HttpResponseRedirect('%s%s=%s' % (redirect_url, name, 
                                                          session_key)) 
 
@@ -152,7 +105,7 @@ class CookielessSessionMiddleware(object):
                     anchor_value = m.groupdict().get("anchor")
                 return_str = '<a%shref="%s%s=%s%s"%s>' % (
                                  m.groupdict()['pre_href'],
-                                 self._prepare_url(m.groupdict()['in_href']),
+                                 self._sesh.prepare_url(m.groupdict()['in_href']),
                                  name,
                                  session_key,
                                  anchor_value,

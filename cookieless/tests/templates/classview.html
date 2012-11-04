@@ -1,3 +1,4 @@
+{% load cookieless_tags %}
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 <html>
   <head>
@@ -8,8 +9,9 @@
     <h1>Class view</h1>
 
 
-    <p><a href="/function-view.html">Function view</a></p>
+    <p><a href={% session_url "/function-view.html" %}>Function view</a></p>
     <form method="post" action="/function-view.html">{% csrf_token %}
+      {% session_token %}    
       <input type="text" name="test" value="test form" />
       <input type="submit" />
     </form>  

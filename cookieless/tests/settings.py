@@ -1,17 +1,22 @@
 
 # Django settings for cookieless_test project.
 
+##### django-cookieless ##### 
 # Rewrite URLs to add session id for no_cookies decorated views 
 # (if False then all page navigation must be via form posts)
 COOKIELESS_USE_GET = True
 # Rewriting the response automatically rather than use manual <% session_token %> <% session_url %> 
-COOKIELESS_REWRITE = True
+COOKIELESS_REWRITE = False
+# NB: Need to add django.core.context_processors.request if using manual tags
+# so its available for templatetags/cookieless
+if not COOKIELESS_REWRITE:
+    import django.conf.global_settings as DEFAULT_SETTINGS
+    TEMPLATE_CONTEXT_PROCESSORS = DEFAULT_SETTINGS.TEMPLATE_CONTEXT_PROCESSORS + ('django.core.context_processors.request', )
 # Use client ip and browser to encode session key, to add some CSRF protection without being able to use cookies.
 COOKIELESS_CLIENT_ID = True
-
 # If this list is populated then only hosts that are specifically whitelisted#  are allowed to post to the server. So any domains that the site is served # over should be added to the list. This helps protect against XSS attacks.
-
 COOKIELESS_HOSTS = ['localhost', ]
+
 
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG
@@ -130,6 +135,7 @@ INSTALLED_APPS = (
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'cookieless.tests',
+    'cookieless',
     # Uncomment the next line to enable the admin:
     'django.contrib.admin',
     # Uncomment the next line to enable admin documentation:

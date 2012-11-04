@@ -4,12 +4,14 @@ from django.views.generic import TemplateView
 from django.http import HttpResponse
 import datetime
 from django.utils.html import mark_safe
+from cookieless.utils import CryptSession
 
 def my_function_view(request):
-    """ Test function view """
+    """ Test function view with manually constructed sesh url """
     request.session['funcview'] = 'my_function_view'
     html = "<html><body><h1>Function view</h1>"
-    html += '<p><a href="/">Class view</a></p><hr />'
+    html += '<p><a href="/?%s=%s">Class view</a></p><hr />' 
+    html = html % CryptSession().key_tuple(request)
     html += session_data(request)  + '</body></html>'
     return HttpResponse(html)
 
