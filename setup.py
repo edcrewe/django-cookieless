@@ -5,7 +5,7 @@ version = '0.1'
 
 setup(name='django-cookieless',
       version=version,
-      description="Cookie free sessions and decorator",
+      description="Django cookie free sessions optional decorator",
       long_description=open("README.txt").read() + "\n" +
                        open(os.path.join("docs", "HISTORY.txt")).read(),
       # Get more strings from http://www.python.org/pypi?%3Aaction=list_classifiers
