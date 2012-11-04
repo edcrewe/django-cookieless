@@ -1,6 +1,12 @@
 
 # Django settings for cookieless_test project.
 
+# Rewrite URLs to add session id for no_cookies decorated views 
+# (if False then all page navigation must be via form posts)
+COOKIELESS_USE_GET = True
+# Rewriting the response automatically rather than use manual <% session_token %> <% session_url %> 
+COOKIELESS_REWRITE = True
+
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG
 
@@ -90,7 +96,8 @@ TEMPLATE_LOADERS = (
 
 MIDDLEWARE_CLASSES = (
     'django.middleware.common.CommonMiddleware',
-    'django.contrib.sessions.middleware.SessionMiddleware',
+    # 'django.contrib.sessions.middleware.SessionMiddleware',
+    'cookieless.middleware.CookielessSessionMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',

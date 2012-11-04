@@ -1,5 +1,5 @@
 #-*- coding:utf-8 -*-import time
-import re, pdb
+import re, pdb, time
 
 from django.conf import settings
 from django.utils.cache import patch_vary_headers
@@ -16,9 +16,9 @@ LINKS_RE = r'<a(?P<pre_href>[^>]*?)href=["\'](?P<in_href>[^"\']*?)(?P<anchor>#\S
 class CookielessSessionMiddleware(object):
     """ Django snippets julio carlos and Ivscar 
         http://djangosnippets.org/snippets/1540/
-
         Plus django.session.middleware combined
-        To use, replace 
+
+        Install by replacing 
         'django.contrib.sessions.middleware.SessionMiddleware'
         with 'cookieless.middleware.CookielessSessionMiddleware'
 
@@ -80,7 +80,6 @@ class CookielessSessionMiddleware(object):
                 request.session.save()
             return response
         else:
-            raise Exception('LOST no_cookies')
             return self.standard_session.process_response(request, response)
 
     def _prepare_url(self, url):
@@ -153,8 +152,5 @@ class CookielessSessionMiddleware(object):
 
 
 
-#    def process_view(self, request, callback, callback_args, callback_kwargs):
-#        if getattr(callback, 'no_cookies', True):
-#            return None
 
 
