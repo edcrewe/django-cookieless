@@ -1,5 +1,4 @@
 include README.txt
 recursive-include cookieless *
 recursive-include docs *
-global-include *rst
 global-exclude *pyc
