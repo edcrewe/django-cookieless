@@ -39,17 +39,17 @@ Installation
 
 To install add the package via pip or other build tool, e.g. bin/pip install django-cookieless
 
-Then replace the standard Session in the middleware settings ...
+Then replace the standard Session in the middleware settings:
 
-MIDDLEWARE_CLASSES = (
-    'django.middleware.gzip.GZipMiddleware',
-    'django.middleware.common.CommonMiddleware',
-    'django.middleware.transaction.TransactionMiddleware',
-    # 'django.contrib.sessions.middleware.SessionMiddleware',
-    'cookieless.middleware.CookielessSessionMiddleware',
-)
+>>> MIDDLEWARE_CLASSES = (
+...    'django.middleware.gzip.GZipMiddleware',
+...    'django.middleware.common.CommonMiddleware',
+...    'django.middleware.transaction.TransactionMiddleware',
+...    # 'django.contrib.sessions.middleware.SessionMiddleware',
+...    'cookieless.middleware.CookielessSessionMiddleware',
+...)
 
-The following two settings control its behaviour ...
+The following two settings control its behaviour:
 
 Rewrite URLs to add session id for no_cookies decorated views 
 (if False then all page navigation must be via form posts)
@@ -74,10 +74,10 @@ Usually this is easiest done in the urls.py of your core application ...
 
 from cookieless.decorators import no_cookies
 
-urlpatterns = patterns('',
-    url(r'^view_function/(\d{1,6})$', no_cookies(view_function)),
-    url(r'^view_class/(\d{1,6})$', no_cookies(ViewClass.as_view())),
-)
+>>> urlpatterns = patterns('',
+...    url(r'^view_function/(\d{1,6})$', no_cookies(view_function)),
+...    url(r'^view_class/(\d{1,6})$', no_cookies(ViewClass.as_view())),
+...)
 
 
 
