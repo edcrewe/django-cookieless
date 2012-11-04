@@ -12,8 +12,11 @@ setup(name='django-cookieless',
       classifiers=[
         "Programming Language :: Python",
         "Topic :: Software Development :: Libraries :: Python Modules",
+        "Development Status :: 4 - Beta",
+        "Framework :: Django",
+        "License :: OSI Approved :: Apache Software License"
         ],
-      keywords='No cookies',
+      keywords='Django, No cookies, cookieless',
       author='Ed Crewe',
       author_email='edmundcrewe@gmail.com',
       url='http://edcrewe.com',
