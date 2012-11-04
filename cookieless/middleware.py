@@ -1,6 +1,7 @@
 #-*- coding:utf-8 -*-import time
 import re, pdb, time
 
+from urlparse import urlparse
 from django.conf import settings
 from django.utils.cache import patch_vary_headers
 from django.utils.http import cookie_date
@@ -42,9 +43,11 @@ class CookielessSessionMiddleware(object):
         name = settings.SESSION_COOKIE_NAME
         session_key = request.COOKIES.get(name, '')
         if not session_key:
-            session_key = self._decrypt(request.POST.get(name, None))
+            session_key = self._decrypt(request, 
+                                        request.POST.get(name, None))
             if not session_key and getattr(settings, 'COOKIELESS_USE_GET', False):
-                session_key = self._decrypt(request.GET.get(name, ''))
+                session_key = self._decrypt(request, 
+                                            request.GET.get(name, ''))
             if session_key:
                 request.COOKIES[name] = session_key        
         engine = import_module(settings.SESSION_ENGINE)
@@ -90,24 +93,49 @@ class CookielessSessionMiddleware(object):
             patt = '%s&amp;'
         return patt % (url,)
 
-    def _encrypt(self, sessionid):
+    def _encrypt(self, request, sessionid):
         """ Avoid showing plain sessionids """  
         if not sessionid:
             return ''
-        return crypt(self.secret, sessionid).encode('hex')
+        secret = self._secret(request)
+        return crypt(secret, sessionid).encode('hex')
 
-    def _decrypt(self, sessionid):
-        """ Avoid showing plain sessionids """  
+    def _decrypt(self, request, sessionid):
+        """ Avoid showing plain sessionids 
+            Optionally require that a referer exists and matches the 
+            whitelist, or reset the session
+        """
         if not sessionid:
             return ''
-        return crypt(self.secret, sessionid.decode('hex'))
+        secret = self._secret(request)
+        if getattr(settings, 'COOKIELESS_HOSTS', []):
+            referer = request.META.get('HTTP_REFERER', 'None')
+            if referer == 'None':
+                # End session unless a referer is passed
+                return ''
+            url = urlparse(referer)
+            if url.hostname not in settings.COOKIELESS_HOSTS:
+                err = '%s is unauthorised' % url.hostname
+                raise Exception(err)
+        return crypt(secret, sessionid.decode('hex'))
+
+    def _secret(self, request):
+        """ optionally make secret client dependent 
+        """
+        if getattr(settings, 'COOKIELESS_CLIENT_ID', False):
+            ip = request.META['REMOTE_ADDR']
+            agent = request.META['HTTP_USER_AGENT']
+            secret = crypt(self.secret, agent + ip)[:16]
+            return secret
+        else:
+            return self.secret
 
     def nocookies_response(self, request, response):
         """ Option to rewrite forms and urls to add session automatically """
         name = settings.SESSION_COOKIE_NAME
         session_key = ''
         if request.session.session_key and not request.path.startswith("/admin"):  
-            session_key = self._encrypt(request.session.session_key) 
+            session_key = self._encrypt(request, request.session.session_key) 
 
             if type(response) is HttpResponseRedirect:
                 if not session_key: 

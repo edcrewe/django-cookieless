@@ -6,6 +6,12 @@
 COOKIELESS_USE_GET = True
 # Rewriting the response automatically rather than use manual <% session_token %> <% session_url %> 
 COOKIELESS_REWRITE = True
+# Use client ip and browser to encode session key, to add some CSRF protection without being able to use cookies.
+COOKIELESS_CLIENT_ID = True
+
+# If this list is populated then only hosts that are specifically whitelisted#  are allowed to post to the server. So any domains that the site is served # over should be added to the list. This helps protect against XSS attacks.
+
+COOKIELESS_HOSTS = ['localhost', ]
 
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG
