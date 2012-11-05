@@ -53,8 +53,8 @@ class CryptSession(object):
         """ optionally make secret client dependent 
         """
         if getattr(settings, 'COOKIELESS_CLIENT_ID', False):
-            ip = request.META['REMOTE_ADDR']
-            agent = request.META['HTTP_USER_AGENT']
+            ip = request.META.get('REMOTE_ADDR', '127.0.0.1')
+            agent = request.META.get('HTTP_USER_AGENT', 'unknown browser')
             secret = crypt(self.secret, agent + ip)[:16]
             return secret
         else:

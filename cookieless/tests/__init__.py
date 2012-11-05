@@ -1,3 +1,4 @@
 """ Tests for django-cookieless """
 
-from cookieless.tests import unit_tests
+from cookieless.tests.unit_tests import *
+from cookieless.tests.functional_tests import *

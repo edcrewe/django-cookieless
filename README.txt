@@ -64,7 +64,7 @@ Use client ip and user agent to encrypt session key, to add some sort of CSRF pr
 
 COOKIELESS_CLIENT_ID = True
 
-If this list is populated then only hosts that are specifically whitelisted are allowed to post to the server. So any domains that the site is served over should be added to the list. If no referrer is found, the session is reset.
+If this list is populated then only hosts that are specifically whitelisted are allowed to post to the server. So any domains that the site is served over should be added to the list. If no referer is found, the session is reset.
 This helps protect against XSS attacks.
 
 COOKIELESS_CLIENT_HOSTS = ['localhost', ]

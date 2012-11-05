@@ -7,6 +7,7 @@ Changelog
 - Add COOKIELESS_ANON_ONLY setting to not use cookieless if a user is authorised
 - Update example settings
 - Add test suite
+- Don't assume request META keys exist so OK with test client etc.
 
 0.1 - 4th November 2012
 -----------------------
@@ -21,6 +22,6 @@ Changelog
 - Add CSRF exempt decorator too to ensure cookie not set by that
 - Add templatetags for users who prefer manual adding of session ids
 - Add settings options to configure level of security applied, 
-  e.g. whitelist of refers, no URL rewriting etc.
+  e.g. whitelist of referers, no URL rewriting etc.
 
   Ed Crewe, julio carlos and Ivscar (snippet), Paul Chakravarti (xteacrypt)

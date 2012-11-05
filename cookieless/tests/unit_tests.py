@@ -1,6 +1,7 @@
 from django.conf import settings
 from django.utils import unittest
 from django.test.client import RequestFactory
+from django.utils.importlib import import_module
 
 from cookieless.utils import CryptSession
 
@@ -11,36 +12,41 @@ class CryptTestCase(unittest.TestCase):
     """
     # urls = 'django-cookieless.test_urls'
     
-    def setUp():
+    def setUp(self):
         """ Get a session and a crypt_session """
         self.engine = import_module(settings.SESSION_ENGINE)
         self.crypt_sesh = CryptSession()
         self.factory = RequestFactory()
         
-    def crypt_ok():
+    def crypt_ok(self, request=None):
         """ Check encryption works with various settings """
-        request = self.factory.get('/render/')
-        session = engine.SessionStore()
+        if not request:
+            request = self.factory.get('/render/')
+        session = self.engine.SessionStore()
+        session.create()
+        self.assertNotEqual(session.session_key, None)
         sessionid = self.crypt_sesh.encrypt(request, session.session_key)
-        session_key = self.crypt_sesh.encrypt(request, sessionid)
+        session_key = self.crypt_sesh.decrypt(request, sessionid)
         return session.session_key, session_key
 
-    def test_default():
+    def test_default(self):
         settings.COOKIELESS_CLIENT_ID = False
         settings.COOKIELESS_HOSTS = []
         keys = self.crypt_ok()
         self.assertEqual(*keys)
 
-    def test_client_id():
+    def test_client_id(self):
         settings.COOKIELESS_CLIENT_ID = True
         settings.COOKIELESS_HOSTS = []
         keys = self.crypt_ok()
         self.assertEqual(*keys)
 
-    def test_hosts_check():
+    def test_hosts_check(self):
         settings.COOKIELESS_CLIENT_ID = False
+        request = self.factory.get('/')
+        request.META['HTTP_REFERER'] = 'http://localhost:12345/foobar'
         settings.COOKIELESS_HOSTS = ['localhost', ]
-        keys = self.crypt_ok()
+        keys = self.crypt_ok(request)
         self.assertEqual(*keys)
 
 
