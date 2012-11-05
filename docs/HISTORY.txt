@@ -1,6 +1,13 @@
 Changelog
 =========
 
+0.2 - unreleased
+----------------
+
+- Add COOKIELESS_ANON_ONLY setting to not use cookieless if a user is authorised
+- Update example settings
+- Add test suite
+
 0.1 - 4th November 2012
 -----------------------
 

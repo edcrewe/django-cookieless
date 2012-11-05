@@ -1,11 +1,3 @@
-from django.test import TestCase
+""" Tests for django-cookieless """
 
-class AppTestCase(TestCase):
-    """
-    Populate this class with unit tests for your application
-    """
-    
-    urls = 'django-cookieless.test_urls'
-    
-    def testApp():
-        pass
+from cookieless.tests import unit_tests
