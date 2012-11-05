@@ -80,6 +80,6 @@ from cookieless.decorators import no_cookies
 ...)
 
 
-
+NOTE: If you turn on the django debug toolbar it will override, and set a session cookie, on the decorated views. So don't check to see if cookieless is working, with it enabled!
 
 
