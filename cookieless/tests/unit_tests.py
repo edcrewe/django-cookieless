@@ -17,7 +17,7 @@ class CryptTestCase(unittest.TestCase):
         self.crypt_sesh = CryptSession()
         self.factory = RequestFactory()
         
-    def crypt_ok(request=None):
+    def crypt_ok():
         """ Check encryption works with various settings """
         request = self.factory.get('/render/')
         session = engine.SessionStore()
