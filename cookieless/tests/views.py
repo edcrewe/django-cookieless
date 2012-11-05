@@ -6,6 +6,14 @@ import datetime
 from django.utils.html import mark_safe
 from cookieless.utils import CryptSession
 
+def session_data(request):
+    """ Utility function to display session """
+    html = "My session %s.<ul>" % request.session.session_key
+    for key, value in request.session.items():
+        html += "<li>%s = %s </li>" % (key, value)
+    html += '<ul>'    
+    return mark_safe(html)
+
 def my_function_view(request):
     """ Test function view with manually constructed sesh url """
     request.session['funcview'] = 'my_function_view'
@@ -15,13 +23,13 @@ def my_function_view(request):
     html += session_data(request)  + '</body></html>'
     return HttpResponse(html)
 
-def session_data(request):
-    """ Utility function to display session """
-    html = "My session %s.<ul>" % request.session.session_key
-    for key, value in request.session.items():
-        html += "<li>%s = %s </li>" % (key, value)
-    html += '<ul>'    
-    return mark_safe(html)
+def my_plain_view(request):
+    """ Test plain html with form and url """
+    html = "<html><body><h1>Function view</h1>"
+    html += '<p><a href="/">Plain view</a></p><hr />' 
+    html += '<form action="post"><input type="submit"></form>'
+    html += '</body></html>'
+    return HttpResponse(html)
 
 class MyClassView(TemplateView):
     """ Test class view - with form """

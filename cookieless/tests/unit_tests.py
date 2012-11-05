@@ -21,7 +21,7 @@ class CryptTestCase(unittest.TestCase):
     def crypt_ok(self, request=None):
         """ Check encryption works with various settings """
         if not request:
-            request = self.factory.get('/render/')
+            request = self.factory.get('/')
         session = self.engine.SessionStore()
         session.create()
         self.assertNotEqual(session.session_key, None)
