@@ -58,6 +58,9 @@ class CookielessSessionMiddleware(object):
         session every time, save the changes and set a session cookie.
         """
         if getattr(request, 'no_cookies', False):
+            if getattr(settings, 'COOKIELESS_ANON_ONLY', 
+                       False) and not request.user.is_anonymous():
+                return self.standard_session.process_response(request, response)
             response.cookies.clear()
             # cookieless - do same as standard process response
             #              but dont set the cookie

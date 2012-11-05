@@ -22,6 +22,9 @@ COOKIELESS_CLIENT_ID = True
 # If this list is populated then only hosts that are specifically whitelisted#  are allowed to post to the server. So any domains that the site is served # over should be added to the list. This helps protect against XSS attacks.
 COOKIELESS_HOSTS = ['localhost', ]
 
+# Further security option to not use cookieless sessions if a user exists.
+COOKIELESS_ANON_ONLY = True
+
 #############################
 
 DEBUG = True
