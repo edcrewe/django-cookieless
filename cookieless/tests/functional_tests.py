@@ -67,6 +67,7 @@ class FuncTestCase(unittest.TestCase):
             and confirm it is retained and populated in the second page
         """
         settings.COOKIELESS_REWRITE = False
+        settings.COOKIELESS_URL_SPECIFIC = False
         response = self.browser.get('/')
         session, session_id = self.get_session(response)
         self.assertTrue('classview' in session.keys())
@@ -79,3 +80,24 @@ class FuncTestCase(unittest.TestCase):
         self.assertTrue('funcview' in session.keys())
         self.assertEqual(len(session.keys()), 3)
 
+    def test_session_not_retained_other_url(self):
+        """ Get the first page then retrieve the session
+            and confirm it is no longer retained if the url is not maintained
+        """
+        settings.COOKIELESS_REWRITE = False
+        settings.COOKIELESS_URL_SPECIFIC = True
+        response = self.browser.get('/')
+        session, session_id = self.get_session(response)
+        self.assertTrue('classview' in session.keys())
+        self.assertEqual(len(session.keys()), 2)
+        # Post form to second page where session is restarted
+        postdict = { self.skey : session_id, }
+        self.browser.post("/function-view.html", postdict)
+        session = self.engine.SessionStore(session.session_key)
+        self.assertTrue('funcview' not in session.keys())
+        self.assertEqual(len(session.keys()), 2)
+        # Post form back to first page where session is retained
+        postdict = { self.skey : session_id, }
+        self.browser.post("/", postdict)
+        session = self.engine.SessionStore(session.session_key)
+        self.assertEqual(len(session.keys()), 3)

@@ -25,6 +25,10 @@ COOKIELESS_HOSTS = ['localhost', ]
 # Further security option to not use cookieless sessions if a user exists.
 COOKIELESS_ANON_ONLY = True
 
+# Further security option to only keep a session for accessing a specific URL
+COOKIELESS_URL_SPECIFIC = True
+
+
 #############################
 
 DEBUG = True

@@ -1,13 +1,16 @@
 Changelog
 =========
 
-0.2 - unreleased
-----------------
+0.2 - 6th November 2012
+-----------------------
 
 - Add COOKIELESS_ANON_ONLY setting to not use cookieless if a user is authorised
 - Update example settings
 - Add test suite
 - Don't assume request META keys exist so OK with test client etc.
+- Fix session decrypt with wrong secret - generates non-unicode key bug 
+  rather than new session
+- Add SPECIFIC_URL option for extra security for sessions
 
 0.1 - 4th November 2012
 -----------------------

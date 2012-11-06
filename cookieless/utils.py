@@ -50,12 +50,18 @@ class CryptSession(object):
                 self.encrypt(request, request.session.session_key))
 
     def _secret(self, request):
-        """ optionally make secret client dependent 
+        """ optionally make secret client or url dependent
+            NB: Needs to be at least 16 characters so add secret to META data
         """
+        secret = self.secret
+        specific = ''
+        if getattr(settings, 'COOKIELESS_URL_SPECIFIC', False):
+            specific += request.META.get('SERVER_NAME', '')
+            specific += request.META.get('PATH_INFO', '')
         if getattr(settings, 'COOKIELESS_CLIENT_ID', False):
-            ip = request.META.get('REMOTE_ADDR', '127.0.0.1')
-            agent = request.META.get('HTTP_USER_AGENT', 'unknown browser')
-            secret = crypt(self.secret, agent + ip)[:16]
-            return secret
-        else:
-            return self.secret
+            specific += request.META.get('REMOTE_ADDR', '127.0.0.1') 
+            specific += request.META.get('HTTP_USER_AGENT', 'unknown browser')
+        if specific:
+            secret = crypt(secret, specific + self.secret) 
+            secret = secret.encode('hex')[-16:]
+        return secret

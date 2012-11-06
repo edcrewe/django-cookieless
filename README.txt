@@ -86,6 +86,11 @@ COOKIELESS_ANON_ONLY = True
 If this is set then authorised users will automatically switch to using the standard django cookie based sessions and CSRF, on no_cookies decorated views.
 This ensures that cookieless cannot be abused to allow capture of a user's session - and hence privilege escalation attacks.
 
+
+COOKIELESS_URL_SPECIFIC = True
+
+Further security option to only keep a session for accessing a specific URL 
+
 NOTE: If you turn on the django debug toolbar it will override, and set a session cookie, on the decorated views. So don't check to see if cookieless is working, with it enabled!
 
 Tests

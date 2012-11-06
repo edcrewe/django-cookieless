@@ -37,6 +37,8 @@ class CookielessSessionMiddleware(object):
     def process_request(self, request):
         """ Check if we have the session key from a cookie, 
             if not check post, and get if allowed
+            If decryption fails will not return unicode key so
+            test for that and set to empty string
         """
         name = settings.SESSION_COOKIE_NAME
         session_key = request.COOKIES.get(name, '')
@@ -46,8 +48,10 @@ class CookielessSessionMiddleware(object):
             if not session_key and getattr(settings, 'COOKIELESS_USE_GET', False):
                 session_key = self._sesh.decrypt(request, 
                                             request.GET.get(name, ''))
-            #if session_key:
-            #    request.COOKIES[name] = session_key        
+            try:
+                session_key = unicode(session_key)
+            except:
+                session_key = ''
         engine = import_module(settings.SESSION_ENGINE)
         request.session = engine.SessionStore(session_key)
 
