@@ -51,6 +51,8 @@ Then replace the standard Session in the middleware settings:
 
 The following two settings control its behaviour:
 
+(see the example settings file)
+
 Rewrite URLs to add session id for no_cookies decorated views 
 (if False then all page navigation must be via form posts)
 
@@ -79,7 +81,23 @@ from cookieless.decorators import no_cookies
 ...    url(r'^view_class/(\d{1,6})$', no_cookies(ViewClass.as_view())),
 ...)
 
+COOKIELESS_ANON_ONLY = True
+
+If this is set then authorised users will automatically switch to using the standard django cookie based sessions and CSRF, on no_cookies decorated views.
+This ensures that cookieless cannot be abused to allow capture of a user's session - and hence privilege escalation attacks.
 
 NOTE: If you turn on the django debug toolbar it will override, and set a session cookie, on the decorated views. So don't check to see if cookieless is working, with it enabled!
 
+Tests
+-----
 
+The test suite sets up a simple application to test cookies manually, and to run the functional tests against.
+
+Note that if the egg is installed normally, the cookieless.tests application will probably not have write permissions
+so to run the tests install via:
+
+bin/pip -e django-cookieless
+
+Then run via:
+
+bin/django-admin.py or manage.py test cookieless --settings="cookieless.tests.settings"
