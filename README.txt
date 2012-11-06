@@ -94,10 +94,11 @@ Tests
 The test suite sets up a simple application to test cookies manually, and to run the functional tests against.
 
 Note that if the egg is installed normally, the cookieless.tests application will probably not have write permissions
-so to run the tests install via:
+so to run the tests install from src:
 
-bin/pip -e django-cookieless
+bin/pip install -e git+https://github.com/edcrewe/django-cookieless#egg=django-cookieless
 
+Or move the tests application out and install separately as a django app.
 Then run via:
 
 bin/django-admin.py or manage.py test cookieless --settings="cookieless.tests.settings"
