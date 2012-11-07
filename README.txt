@@ -108,3 +108,7 @@ Or move the tests application out and install separately as a django app.
 Then run via:
 
 bin/django-admin.py or manage.py test cookieless --settings="cookieless.tests.settings"
+
+Note: Because the django test browser has some session implementation specific mocking, 
+it fails to work if used directly against cookieless, so to stop it breaking other tests
+cookieless checks to see if META['SERVER_NAME'] == 'testserver' and reverts to django.contrib.sessions if so.
