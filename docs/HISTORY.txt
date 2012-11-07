@@ -7,7 +7,9 @@ Changelog
 - Turn off cookieless for django test browser test - since its hard coded to use
   dummy sessions if an alternative session provider is in use - could break other tests
 - Add server name switch to re-enable test browser for cookieless functional tests
-- Change ANON user switch to never use cookie sessions and rename 
+- Change ANON user switch to never use cookie originated sessions - move to response
+- Make session use cookieless if present 
+- Delete request cookies if found in response
 - Refactor settings to a dictionary
 - Add some tests
 - Move fix for non-unicode key to the decrypt method.
