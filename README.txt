@@ -56,20 +56,20 @@ The following two settings control its behaviour:
 Rewrite URLs to add session id for no_cookies decorated views 
 (if False then all page navigation must be via form posts)
 
-COOKIELESS_USE_GET = True
+COOKIELESS['USE_GET'] = True
 
 Rewriting the response automatically rather than use manual <% session_token %> <% session_url %> 
 
-COOKIELESS_REWRITE = True
+COOKIELESS['REWRITE'] = True
 
 Use client ip and user agent to encrypt session key, to add some sort of CSRF protection given the standard CSRF has to be disabled without cookies.
 
-COOKIELESS_CLIENT_ID = True
+COOKIELESS['CLIENT_ID'] = True
 
 If this list is populated then only hosts that are specifically whitelisted are allowed to post to the server. So any domains that the site is served over should be added to the list. If no referer is found, the session is reset.
 This helps protect against XSS attacks.
 
-COOKIELESS_CLIENT_HOSTS = ['localhost', ]
+COOKIELESS['HOSTS'] = ['localhost', ]
 
 Now you can decorate views to prevent them setting cookies, whilst still retaining the use of Sessions.
 Usually this is easiest done in the urls.py of your core application ...
@@ -81,13 +81,14 @@ from cookieless.decorators import no_cookies
 ...    url(r'^view_class/(\d{1,6})$', no_cookies(ViewClass.as_view())),
 ...)
 
-COOKIELESS_ANON_ONLY = True
+COOKIELESS['NO_COOKIE_PERSIST'] = True
 
-If this is set then authorised users will automatically switch to using the standard django cookie based sessions and CSRF, on no_cookies decorated views.
-This ensures that cookieless cannot be abused to allow capture of a user's session - and hence privilege escalation attacks.
+Further security option to not find and persist cookie based sessions as cookieless ones
+since these may be tied to a user or other data. Instead new sessions are created for tying to cookieless data. 
+This reduces the risk of cookieless allowing capture of a user's session - and hence privilege escalation attacks.
 
 
-COOKIELESS_URL_SPECIFIC = True
+COOKIELESS['URL_SPECIFIC'] = True
 
 Further security option to only keep a session for accessing a specific URL 
 

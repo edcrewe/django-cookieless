@@ -4,7 +4,7 @@ from django.test.client import RequestFactory
 from django.utils.importlib import import_module
 
 from cookieless.utils import CryptSession
-
+from cookieless.config import DEFAULT_SETTINGS
 
 class CryptTestCase(unittest.TestCase):
     """
@@ -14,6 +14,7 @@ class CryptTestCase(unittest.TestCase):
     
     def setUp(self):
         """ Get a session and a crypt_session """
+        self.settings = getattr(settings, 'COOKIELESS', DEFAULT_SETTINGS)
         self.engine = import_module(settings.SESSION_ENGINE)
         self.crypt_sesh = CryptSession()
         self.factory = RequestFactory()
@@ -30,19 +31,19 @@ class CryptTestCase(unittest.TestCase):
         return session.session_key, session_key
 
     def test_default(self):
-        settings.COOKIELESS_CLIENT_ID = False
-        settings.COOKIELESS_HOSTS = []
+        self.settings['CLIENT_ID'] = False
+        self.settings['HOSTS'] = []
         keys = self.crypt_ok()
         self.assertEqual(*keys)
 
     def test_client_id(self):
-        settings.COOKIELESS_CLIENT_ID = True
-        settings.COOKIELESS_HOSTS = []
+        self.settings['CLIENT_ID'] = False
+        self.settings['HOSTS'] = []
         keys = self.crypt_ok()
         self.assertEqual(*keys)
 
     def test_hosts_check(self):
-        settings.COOKIELESS_CLIENT_ID = False
+        self.settings['CLIENT_ID'] = False
         request = self.factory.get('/')
         request.META['HTTP_REFERER'] = 'http://localhost:12345/foobar'
         settings.COOKIELESS_HOSTS = ['localhost', ]

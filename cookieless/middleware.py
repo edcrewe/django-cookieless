@@ -9,9 +9,7 @@ from django.http  import  HttpResponseRedirect
 from django.contrib.sessions.middleware import SessionMiddleware
 # Obscure the session id when passing it around in HTML
 from cookieless.utils import CryptSession
-
-LINKS_RE = r'<a(?P<pre_href>[^>]*?)href=["\'](?P<in_href>[^"\']*?)(?P<anchor>#\S+)?["\'](?P<post_href>[^>]*?)>'
-
+from cookieless.config import LINKS_RE, DEFAULT_SETTINGS
 
 class CookielessSessionMiddleware(object):
     """ Django snippets julio carlos and Ivscar 
@@ -29,6 +27,7 @@ class CookielessSessionMiddleware(object):
         """ Add regex for auto inserts and an instance of
             the standard django.contrib.sessions middleware
         """
+        self.settings = getattr(settings, 'COOKIELESS', DEFAULT_SETTINGS)
         self._re_links = re.compile(LINKS_RE, re.I)
         self._re_forms = re.compile('</form>', re.I)
         self._sesh = CryptSession()
@@ -37,22 +36,33 @@ class CookielessSessionMiddleware(object):
     def process_request(self, request):
         """ Check if we have the session key from a cookie, 
             if not check post, and get if allowed
-            If decryption fails will not return unicode key so
-            test for that and set to empty string
+            If decryption fails 
+            (ie secret is wrong because of other setting restrictions)
+            decrypt may not return a real key so
+            test for that and start a new session if so
         """
         name = settings.SESSION_COOKIE_NAME
-        session_key = request.COOKIES.get(name, '')
+        if self.settings.get('NO_COOKIE_PERSIST', False):
+            # Don't use cookieless for any session thats from a cookie 
+            # - may be attached to a user - so always use a separate one
+            session_key = ''
+        else:
+            session_key = request.COOKIES.get(name, '')
         if not session_key:
             session_key = self._sesh.decrypt(request, 
                                         request.POST.get(name, None))
-            if not session_key and getattr(settings, 'COOKIELESS_USE_GET', False):
+            if not session_key and self.settings.get('USE_GET', False):
                 session_key = self._sesh.decrypt(request, 
-                                            request.GET.get(name, ''))
+                                                 request.GET.get(name, ''))
         engine = import_module(settings.SESSION_ENGINE)
+        # If the session_key isn't tied to a session - create a new one
         try:
             request.session = engine.SessionStore(session_key)
         except:
-            request.session = engine.SessionStore()
+            pass
+        if not request.session.session_key:
+            request.session = engine.SessionStore() 
+            request.session.save()
 
     def process_response(self, request, response):
         """
@@ -62,18 +72,17 @@ class CookielessSessionMiddleware(object):
         """
         if getattr(request, 'no_cookies', False):
             # The django test client has mock session / cookies which assume cookies are in use
-            # so to turn off cookieless for tests since fixing it is not viable - 
-            # Remove this if the django test client.session is fixed to use the real session engine
+            # so to turn off cookieless for tests 
+            # TODO: Find work around for test browser switch hardcoded to session being from django.contrib.session 
             if request.META.get('SERVER_NAME', '') == 'testserver':
-                return self.standard_session.process_response(request, response)
-            if getattr(settings, 'COOKIELESS_ANON_ONLY', 
-                       False) and not request.user.is_anonymous():
                 return self.standard_session.process_response(request, response)
             response.cookies.clear()
             # cookieless - do same as standard process response
             #              but dont set the cookie
-            if getattr(settings, 'COOKIELESS_REWRITE', False):
+            if self.settings.get('REWRITE', False):
                 response = self.nocookies_response(request, response)
+                #raise Exception(request.session.session_key)
+
             try:
                 accessed = request.session.accessed
                 modified = request.session.modified
@@ -124,7 +133,7 @@ class CookielessSessionMiddleware(object):
                                  )
                 return return_str                                 
 
-            if getattr(settings, 'COOKIELESS_USE_GET', False):            
+            if self.settings.get('USE_GET', False):            
                 try:
                     response.content = self._re_links.sub(new_url, response.content)
                 except:

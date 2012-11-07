@@ -1,29 +1,33 @@
 ##### django-cookieless ##### 
 
-# Rewrite URLs to add session id for no_cookies decorated views 
-# (if False then all page navigation must be via form posts)
-COOKIELESS_USE_GET = True
+COOKIELESS = {}
 
 # Rewriting the response automatically rather than use manual <% session_token %> <% session_url %> 
-COOKIELESS_REWRITE = False
+COOKIELESS['REWRITE'] = True
+
+# Rewrite URLs to add session id for no_cookies decorated views 
+# (if False then all page navigation must be via form posts)
+COOKIELESS['USE_GET'] = True
 
 # NB: Need to add django.core.context_processors.request if using manual tags
 # so its available for templatetags/cookieless
-if not COOKIELESS_REWRITE:
+if not COOKIELESS['REWRITE']:
     import django.conf.global_settings as DEFAULT_SETTINGS
     TEMPLATE_CONTEXT_PROCESSORS = DEFAULT_SETTINGS.TEMPLATE_CONTEXT_PROCESSORS + ('django.core.context_processors.request', )
 
 # Use client ip and browser to encode session key, to add some CSRF protection without being able to use cookies.
-COOKIELESS_CLIENT_ID = True
+COOKIELESS['CLIENT_ID'] = True
 
 # If this list is populated then only hosts that are specifically whitelisted#  are allowed to post to the server. So any domains that the site is served # over should be added to the list. This helps protect against XSS attacks.
-COOKIELESS_HOSTS = ['localhost', ]
+COOKIELESS['HOSTS'] = ['localhost', ]
 
-# Further security option to not use cookieless sessions if a user exists.
-COOKIELESS_ANON_ONLY = True
+# Further security option to not find and persist cookie based sessions as cookieless ones
+# since these may be tied to a user or other data 
+COOKIELESS['NO_COOKIE_PERSIST'] = True
 
 # Further security option to only keep a session for accessing a specific URL
-COOKIELESS_URL_SPECIFIC = True
+COOKIELESS['URL_SPECIFIC'] = True
+
 
 #############################
 

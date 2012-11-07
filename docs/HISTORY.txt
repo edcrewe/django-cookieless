@@ -1,6 +1,19 @@
 Changelog
 =========
 
+0.3 - 7th November 2012
+-----------------------
+
+- Turn off cookieless for django test browser test - since its hard coded to use
+  dummy sessions if an alternative session provider is in use - could break other tests
+- Add server name switch to re-enable test browser for cookieless functional tests
+- Change ANON user switch to never use cookie sessions and rename 
+- Refactor settings to a dictionary
+- Add some tests
+- Move fix for non-unicode key to the decrypt method.
+
+  [Ed Crewe]
+
 0.2 - 6th November 2012
 -----------------------
 
@@ -11,6 +24,8 @@ Changelog
 - Fix session decrypt with wrong secret - generates non-unicode key bug 
   rather than new session
 - Add SPECIFIC_URL option for extra security for sessions
+
+  [Ed Crewe]
 
 0.1 - 4th November 2012
 -----------------------
@@ -27,4 +42,4 @@ Changelog
 - Add settings options to configure level of security applied, 
   e.g. whitelist of referers, no URL rewriting etc.
 
-  Ed Crewe, julio carlos and Ivscar (snippet), Paul Chakravarti (xteacrypt)
+  [Ed Crewe, julio carlos and Ivscar (snippet), Paul Chakravarti (xteacrypt)]

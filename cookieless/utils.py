@@ -2,6 +2,7 @@
 from django.conf import settings
 from urlparse import urlparse
 from cookieless.xteacrypt import crypt
+from cookieless.config import DEFAULT_SETTINGS
 
 class CryptSession(object):
     """ Tool to generate encrypted session id for 
@@ -9,6 +10,7 @@ class CryptSession(object):
     """
     def __init__(self):
         self.secret = settings.SECRET_KEY[:16]
+        self.settings = getattr(settings, 'COOKIELESS', DEFAULT_SETTINGS)
 
     def prepare_url(self, url):
         patt = None
@@ -33,13 +35,13 @@ class CryptSession(object):
         if not sessionid:
             return ''
         secret = self._secret(request)
-        if getattr(settings, 'COOKIELESS_HOSTS', []):
+        if self.settings.get('HOSTS', []):
             referer = request.META.get('HTTP_REFERER', 'None')
             if referer == 'None':
                 # End session unless a referer is passed
                 return ''
             url = urlparse(referer)
-            if url.hostname not in settings.COOKIELESS_HOSTS:
+            if url.hostname not in self.settings['HOSTS']:
                 err = '%s is unauthorised' % url.hostname
                 raise Exception(err)
         session_key = crypt(secret, sessionid.decode('hex'))
@@ -60,10 +62,10 @@ class CryptSession(object):
         """
         secret = self.secret
         specific = ''
-        if getattr(settings, 'COOKIELESS_URL_SPECIFIC', False):
+        if self.settings.get('URL_SPECIFIC', False):
             specific += request.META.get('SERVER_NAME', '')
             specific += request.META.get('PATH_INFO', '')
-        if getattr(settings, 'COOKIELESS_CLIENT_ID', False):
+        if self.settings.get('CLIENT_ID', False):
             specific += request.META.get('REMOTE_ADDR', '127.0.0.1') 
             specific += request.META.get('HTTP_USER_AGENT', 'unknown browser')
         if specific:
