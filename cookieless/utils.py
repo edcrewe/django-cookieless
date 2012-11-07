@@ -42,7 +42,12 @@ class CryptSession(object):
             if url.hostname not in settings.COOKIELESS_HOSTS:
                 err = '%s is unauthorised' % url.hostname
                 raise Exception(err)
-        return crypt(secret, sessionid.decode('hex'))
+        session_key = crypt(secret, sessionid.decode('hex'))
+        try:
+            return unicode(session_key)
+        except:
+            return ''
+ 
 
     def key_tuple(self, request):
         """ For use in generated html """
