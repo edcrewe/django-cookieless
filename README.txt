@@ -22,17 +22,33 @@ nor are complex rewritten URLs.
 
 It is for that purpose this egg was devised.
 
-To ameliorate the security implications, a whitelist of allowed domains or allowed URLs, can be set in the configuration. 
+To ameliorate the security implications, a whitelist of allowed domains, can be set in the configuration. 
 
-Usage can also be restricted to SSL only. 
+Usage can also be restricted to a particular URL. 
 
-As a final safety measure handling of GET requests can be turned off, so that the encrypted session id is not present in any URLs.
+As another safety measure, handling of GET requests can be turned off, so that the encrypted session id is not present in any URLs.
 
 Please NOTE: It is not advisable to use this package without some form of the above restrictions being in place. 
 
-The package also provides a decorator utility to turn off cookie setting for particular views (which also sets the csrf_exempt flag).
+The package provides a decorator utility to turn off cookie setting for particular views (which also sets the csrf_exempt flag).
 
 The package also handles the case of session handling for anonymous users with cookies disabled in the browser.
+
+You can decorate views to prevent them setting cookies, whilst still retaining the use of Sessions.
+Usually this is easiest done in the urls.py of your core application ...
+
+from cookieless.decorators import no_cookies
+
+>>> urlpatterns = patterns('',
+...    url(r'^view_function/(\d{1,6})$', no_cookies(view_function)),
+...    url(r'^view_class/(\d{1,6})$', no_cookies(ViewClass.as_view())),
+...)
+
+Note that if a number of browser tabs are open on to a site with cookieless, they will each maintain a completely separate session, since
+without cookies the session is tied to the session posted from the pages accessed, not the client as a whole.
+
+This is the desired behaviour, and can be reduced by using URL rewriting to make any links to open extra windows pass session across. 
+However of course this also means that potentially a session can be shared across browsers, too.
 
 Installation
 ------------
@@ -49,48 +65,36 @@ Then replace the standard Session in the middleware settings:
 ...    'cookieless.middleware.CookielessSessionMiddleware',
 ...)
 
-The following two settings control its behaviour:
+The following settings control its behaviour:
 
 (see the example settings file)
 
-Rewrite URLs to add session id for no_cookies decorated views 
+1. Rewriting the response automatically rather than use manual <% session_token %> <% session_url %> 
+
+COOKIELESS['REWRITE'] = True
+
+2. Rewrite URLs to add session id for no_cookies decorated views 
 (if False then all page navigation must be via form posts)
 
 COOKIELESS['USE_GET'] = True
 
-Rewriting the response automatically rather than use manual <% session_token %> <% session_url %> 
-
-COOKIELESS['REWRITE'] = True
-
-Use client ip and user agent to encrypt session key, to add some sort of CSRF protection given the standard CSRF has to be disabled without cookies.
+3. Use client ip and user agent to encrypt session key, to add some sort of CSRF protection given the standard CSRF has to be disabled without cookies.
 
 COOKIELESS['CLIENT_ID'] = True
 
-If this list is populated then only hosts that are specifically whitelisted are allowed to post to the server. So any domains that the site is served over should be added to the list. If no referer is found, the session is reset.
-This helps protect against XSS attacks.
+4. If this list is populated then only hosts that are specifically whitelisted are allowed to post to the server. So any domains that the site is served over should be added to the list. However, if no referer is found, the session is reset, which will occur with a page reload. This helps protect against XSS attacks.
 
 COOKIELESS['HOSTS'] = ['localhost', ]
 
-Now you can decorate views to prevent them setting cookies, whilst still retaining the use of Sessions.
-Usually this is easiest done in the urls.py of your core application ...
-
-from cookieless.decorators import no_cookies
-
->>> urlpatterns = patterns('',
-...    url(r'^view_function/(\d{1,6})$', no_cookies(view_function)),
-...    url(r'^view_class/(\d{1,6})$', no_cookies(ViewClass.as_view())),
-...)
-
-COOKIELESS['NO_COOKIE_PERSIST'] = True
-
-Further security option to not find and persist cookie based sessions as cookieless ones
+5. Further security option to not find and persist cookie based sessions as cookieless ones
 since these may be tied to a user or other data. Instead new sessions are created for tying to cookieless data. 
 This reduces the risk of cookieless allowing capture of a user's session - and hence privilege escalation attacks.
 
+COOKIELESS['NO_COOKIE_PERSIST'] = True
+
+6. Further security option to only keep a session for accessing a specific URL 
 
 COOKIELESS['URL_SPECIFIC'] = True
-
-Further security option to only keep a session for accessing a specific URL 
 
 NOTE: If you turn on the django debug toolbar it will override, and set a session cookie, on the decorated views. So don't check to see if cookieless is working, with it enabled!
 
