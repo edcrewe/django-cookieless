@@ -97,8 +97,6 @@ COOKIELESS['URL_SPECIFIC'] = True
 
 COOKIELESS['DELETE_COOKIES'] = False
 
-NOTE: If you turn on the django debug toolbar it will override, and set a session cookie, on the decorated views. So don't check to see if cookieless is working, with it enabled!
-
 Tests
 -----
 
