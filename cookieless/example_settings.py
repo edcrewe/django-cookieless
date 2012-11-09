@@ -28,6 +28,8 @@ COOKIELESS['NO_COOKIE_PERSIST'] = True
 # Further security option to only keep a session for accessing a specific URL
 COOKIELESS['URL_SPECIFIC'] = True
 
+# Delete any cookies found when on a no_cookies URL  
+COOKIELESS['COOKIE_DELETE']
 
 #############################
 

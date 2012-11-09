@@ -1,6 +1,13 @@
 Changelog
 =========
 
+0.4 - 9th November 2012
+-----------------------
+
+- Fix issue of not having no_cookies to test in process_request by getting it from urlresolvers
+  Now we only check for cookie session where we should, and cookies cannot mess with cookieless sessions
+- Make the deletion of any cookies that are passed on to the URL, an optional feature
+
 0.3 - 7th November 2012
 -----------------------
 

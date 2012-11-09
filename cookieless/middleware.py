@@ -1,6 +1,7 @@
 #-*- coding:utf-8 -*-import time
 import re, pdb, time
 
+from django.core.urlresolvers import resolve
 from django.conf import settings
 from django.utils.cache import patch_vary_headers
 from django.utils.http import cookie_date
@@ -42,15 +43,17 @@ class CookielessSessionMiddleware(object):
             (ie secret is wrong because of other setting restrictions)
             decrypt may not return a real key so
             test for that and start a new session if so
-            NB: Cant check for no_cookies attribute of request here since 
-                its before it gets sent to the view
+            NB: Use resolve to check view for no_cookies 
+                - because its before view is processed
         """
-        name = settings.SESSION_COOKIE_NAME
-        session_key = self._sesh.decrypt(request, 
-                                         request.POST.get(name, None))
-        if not session_key and self.settings.get('USE_GET', False):
+        match = resolve(request.path)
+        if match and getattr(match.func, 'no_cookies', False):
+            name = settings.SESSION_COOKIE_NAME
             session_key = self._sesh.decrypt(request, 
-                                             request.GET.get(name, ''))
+                                             request.POST.get(name, None))
+            if not session_key and self.settings.get('USE_GET', False):
+                session_key = self._sesh.decrypt(request, 
+                                                 request.GET.get(name, ''))
         if not session_key:
             session_key = request.COOKIES.get(name, '')
 
@@ -63,6 +66,7 @@ class CookielessSessionMiddleware(object):
             session_key = request.session.session_key
         except:
             session_key = ''
+
         # If the session_key isn't tied to a session - create a new one
         if not session_key:
             request.session = self.engine.SessionStore() 
@@ -81,7 +85,7 @@ class CookielessSessionMiddleware(object):
             # TODO: Find work around for test browser switch hardcoded to session being from django.contrib.session 
             if request.META.get('SERVER_NAME', '') == 'testserver':
                 return self.standard_session.process_response(request, response)
-            
+#            raise Exception(request.session.values())
             if request.COOKIES:
                 if self.settings.get('NO_COOKIE_PERSIST', False):
                     # Don't persist a session with cookieless for any session 
@@ -91,10 +95,10 @@ class CookielessSessionMiddleware(object):
                     if cookie_key == request.session.session_key:
                         request.session = self.engine.SessionStore() 
                         request.session.save()
-
-                # Blat any existing cookies
-                for key in request.COOKIES.keys():
-                    response.delete_cookie(key)
+                if self.settings.get('DELETE_COOKIES', False):
+                    # Blat any existing cookies
+                    for key in request.COOKIES.keys():
+                        response.delete_cookie(key)
 
             # Dont set any new cookies
             response.cookies.clear()

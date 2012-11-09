@@ -73,8 +73,7 @@ The following settings control its behaviour:
 
 COOKIELESS['REWRITE'] = True
 
-2. Rewrite URLs to add session id for no_cookies decorated views 
-(if False then all page navigation must be via form posts)
+2. Rewrite URLs to add session id for no_cookies decorated views (if False then all page navigation must be via form posts)
 
 COOKIELESS['USE_GET'] = True
 
@@ -86,15 +85,17 @@ COOKIELESS['CLIENT_ID'] = True
 
 COOKIELESS['HOSTS'] = ['localhost', ]
 
-5. Further security option to not find and persist cookie based sessions as cookieless ones
-since these may be tied to a user or other data. Instead new sessions are created for tying to cookieless data. 
-This reduces the risk of cookieless allowing capture of a user's session - and hence privilege escalation attacks.
+5. Further security option to not find and persist cookie based sessions as cookieless ones since these may be tied to a user or other data. Instead new sessions are created for tying to cookieless data. This reduces the risk of cookieless allowing capture of a user's session - and hence privilege escalation attacks.
 
 COOKIELESS['NO_COOKIE_PERSIST'] = True
 
 6. Further security option to only keep a session for accessing a specific URL 
 
 COOKIELESS['URL_SPECIFIC'] = True
+
+7. Delete any cookies that are found for a no_cookies decorated URL (could be ones set by other URLs)
+
+COOKIELESS['DELETE_COOKIES'] = False
 
 NOTE: If you turn on the django debug toolbar it will override, and set a session cookie, on the decorated views. So don't check to see if cookieless is working, with it enabled!
 
