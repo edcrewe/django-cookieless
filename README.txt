@@ -114,6 +114,10 @@ Then run via:
 
 bin/django-admin.py or manage.py test cookieless --settings="cookieless.tests.settings"
 
-Note: Because the django test browser has some session implementation specific mocking, 
+Note: cookieless/decorator.py
+
+Because the django test browser has some session implementation specific mocking, 
 it fails to work if used directly against cookieless, so to stop it breaking other tests
-cookieless checks to see if META['SERVER_NAME'] == 'testserver' and reverts to django.contrib.sessions if so.
+cookieless checks to see if the django admin command has been called with the 'test' argument and sets settings.TESTING = True, and doesnt decorate with no_cookies if so.
+
+To override this automatic disabling setting, just add TESTING = False, to your test settings.

@@ -5,6 +5,9 @@
 
 COOKIELESS = {}
 
+# Turn cookieless back on
+TESTING = False
+
 # Rewriting the response automatically rather than use manual <% session_token %> <% session_url %> 
 COOKIELESS['REWRITE'] = False
 

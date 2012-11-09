@@ -46,9 +46,11 @@ class CookielessSessionMiddleware(object):
             NB: Use resolve to check view for no_cookies 
                 - because its before view is processed
         """
+        name = settings.SESSION_COOKIE_NAME
+        session_key = ''
         match = resolve(request.path)
+
         if match and getattr(match.func, 'no_cookies', False):
-            name = settings.SESSION_COOKIE_NAME
             session_key = self._sesh.decrypt(request, 
                                              request.POST.get(name, None))
             if not session_key and self.settings.get('USE_GET', False):
@@ -80,12 +82,6 @@ class CookielessSessionMiddleware(object):
         NB: request.COOKIES are the sent ones and response.cookies the set ones!
         """
         if getattr(request, 'no_cookies', False):
-            # The django test client has mock session / cookies which assume cookies are in use
-            # so to turn off cookieless for tests 
-            # TODO: Find work around for test browser switch hardcoded to session being from django.contrib.session 
-            if request.META.get('SERVER_NAME', '') == 'testserver':
-                return self.standard_session.process_response(request, response)
-#            raise Exception(request.session.values())
             if request.COOKIES:
                 if self.settings.get('NO_COOKIE_PERSIST', False):
                     # Don't persist a session with cookieless for any session 

@@ -22,7 +22,7 @@ class FuncTestCase(unittest.TestCase):
         self.settings = getattr(settings, 'COOKIELESS', DEFAULT_SETTINGS)
         self.settings['HOSTS'] = []
         self.browser = Client()
-        self.browser.request(SERVER_NAME='enable_testserver')
+        self.browser.request()
         self.engine = import_module(settings.SESSION_ENGINE)
         self.crypt_sesh = CryptSession()
         self.factory = RequestFactory()
@@ -36,7 +36,7 @@ class FuncTestCase(unittest.TestCase):
             return {}, ''
         parts = parts[1].split('"')
         session_id = parts[0]
-        request = self.factory.get('/', SERVER_NAME='enable_testserver')
+        request = self.factory.get('/')
         session_key = self.crypt_sesh.decrypt(request, session_id)
         try:
             session = self.engine.SessionStore(session_key)
@@ -47,7 +47,7 @@ class FuncTestCase(unittest.TestCase):
     def test_session_in_tags_html(self):
         """ Confirm session is generated in html via tags """
         self.settings['REWRITE'] = False
-        response = self.browser.get('/', SERVER_NAME='enable_testserver')
+        response = self.browser.get('/')
         url = '?%s=' % settings.SESSION_COOKIE_NAME
         # Check form session id is set
         self.assertTrue(self.hidden in response.content)
@@ -56,8 +56,7 @@ class FuncTestCase(unittest.TestCase):
     def test_session_in_rewritten_html(self):
         """ Confirm session is rewritten into html """
         self.settings['REWRITE'] = True
-        response = self.browser.get('/plain-view.html', 
-                                    SERVER_NAME='enable_testserver')
+        response = self.browser.get('/plain-view.html')
         url = '?%s=' % settings.SESSION_COOKIE_NAME
         # Check form session id is set
         self.assertTrue(self.hidden in response.content)
@@ -67,18 +66,19 @@ class FuncTestCase(unittest.TestCase):
         """ Confirm session is rewritten into html """
         self.settings['REWRITE'] = True
         self.settings['USE_GET'] = False
-        response = self.browser.get('/plain-view.html', 
-                                    SERVER_NAME='enable_testserver')
+        response = self.browser.get('/plain-view.html')
         url = '?%s=' % settings.SESSION_COOKIE_NAME
         # Check form session id is set but urls aren't
         self.assertTrue(self.hidden in response.content)
         self.assertTrue(url not in response.content)
 
-    def test_disabled_for_standard_test_browser(self):
-        """ Confirm standard test browser doesnt use cookieless """
+    def test_disabled_for_testing_flag(self):
+        """ Confirm that normally test browser will not use cookieless """
         self.settings['REWRITE'] = True
+        settings.TESTING = True
         response = self.browser.get('/plain-view.html')
         self.assertTrue(self.hidden not in response.content)
+        settings.TESTING = False
 
     def test_session_retained(self):
         """ Get the first page then retrieve the session
@@ -86,7 +86,7 @@ class FuncTestCase(unittest.TestCase):
         """
         self.settings['REWRITE'] = False
         self.settings['URL_SPECIFIC'] = False
-        response = self.browser.get('/', SERVER_NAME='enable_testserver')
+        response = self.browser.get('/')
         session, session_id = self.get_session(response)
         self.assertTrue('classview' in session.keys())
         self.assertEqual(len(session.keys()), 2)
@@ -104,20 +104,19 @@ class FuncTestCase(unittest.TestCase):
         """
         self.settings['REWRITE'] = False
         self.settings['URL_SPECIFIC'] = True
-        response = self.browser.get('/', SERVER_NAME='enable_testserver')
+        response = self.browser.get('/')
         session, session_id = self.get_session(response)
         self.assertTrue('classview' in session.keys())
         self.assertEqual(len(session.keys()), 2)
         # Post form to second page where session is restarted
         postdict = { self.skey : session_id, }
-        self.browser.post("/function-view.html", postdict,
-                          SERVER_NAME='enable_testserver')
+        self.browser.post("/function-view.html", postdict)
         session = self.engine.SessionStore(session.session_key)
         self.assertTrue('funcview' not in session.keys())
         self.assertEqual(len(session.keys()), 2)
         # Post form back to first page where session is retained
         postdict = { self.skey : session_id, }
-        self.browser.post("/", postdict, SERVER_NAME='enable_testserver')
+        self.browser.post("/", postdict)
         session = self.engine.SessionStore(session.session_key)
         self.assertEqual(len(session.keys()), 3)
 
@@ -128,17 +127,17 @@ class FuncTestCase(unittest.TestCase):
         """
         self.settings['REWRITE'] = False
         self.settings['URL_SPECIFIC'] = True
-        response = self.browser.get('/', SERVER_NAME='enable_testserver')
+        response = self.browser.get('/')
         session, session_id = self.get_session(response)
         self.assertTrue('classview' in session.keys())
         self.assertEqual(len(session.keys()), 2)
         # Post form back to first page where other session is started
         postdict = { self.skey : session_id, }
-        self.browser.post("/", postdict)
+        self.browser.post("/", postdict, SERVER_NAME='another_testserver')
         session = self.engine.SessionStore(session.session_key)
         self.assertEqual(len(session.keys()), 2)
         # Post form back to first page where session is retained
         postdict = { self.skey : session_id, }
-        self.browser.post("/", postdict, SERVER_NAME='enable_testserver')
+        self.browser.post("/", postdict)
         session = self.engine.SessionStore(session.session_key)
         self.assertEqual(len(session.keys()), 3)
