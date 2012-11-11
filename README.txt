@@ -17,10 +17,10 @@ This package is designed to cater for anonymous user session maintenance, withou
 WARNING : There are security issues with this, since it is not possible to use
 CSRF protection without session Cookies to maintain a separate token from that passed via the URL or form posts.
 
-However there are cases when it is required to use forms on a public site, where setting cookies is not desirable (due to privacy legislation), 
-nor are complex rewritten URLs.
+However there are cases when forms are used on a public site, where setting cookies is not desirable (`due to privacy legislation <http://www.ico.gov.uk/>`_), since technically they are not required for anonymous users to respond to forms. 
+So if used, may necessitate requesting permission to set cookies, from the user.
 
-It is for that purpose this egg was devised.
+Hence this package was devised to allow django to deliver multipage forms, without using cookies.
 
 To ameliorate the security implications, a whitelist of allowed domains, can be set in the configuration. 
 
@@ -47,7 +47,7 @@ from cookieless.decorators import no_cookies
 Note that if a number of browser tabs are open on to a site with cookieless, they will each maintain a completely separate session, since
 without cookies the session is tied to the session posted from the pages accessed, not the client as a whole.
 
-This is the desired behaviour, and can be reduced by using URL rewriting to make any links to open extra windows pass session across. 
+In cases where this is not the desired behaviour, then it can be reduced by using URL rewriting to make any links to open other windows pass session across. 
 However of course this also means that potentially a session can be shared across browsers, too.
 
 Installation
