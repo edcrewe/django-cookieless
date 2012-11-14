@@ -103,7 +103,6 @@ class CookielessSessionMiddleware(object):
             #              but dont set the cookie
             if self.settings.get('REWRITE', False):
                 response = self.nocookies_response(request, response)
-
             try:
                 accessed = request.session.accessed
                 modified = request.session.modified
@@ -131,14 +130,16 @@ class CookielessSessionMiddleware(object):
         if request.session.session_key and not request.path.startswith("/admin"):  
             session_key = self._sesh.encrypt(request, request.session.session_key) 
 
-            if type(response) is HttpResponseRedirect:
-                if not session_key: 
-                    session_key = ""
-                redirect_url = [x[1] for x in response.items() if x[0] == "Location"][0]
-                redirect_url = self._sesh.prepare_url(redirect_url)
-                return HttpResponseRedirect('%s%s=%s' % (redirect_url, name, 
-                                                         session_key)) 
-
+            if self.settings.get('USE_GET', False) and session_key:
+                if type(response) is HttpResponseRedirect:
+                    host = request.META.get('HTTP_HOST', 'localhost')
+                    redirect_url = [x[1] for x in response.items() if x[0] == "Location"][0]
+                    if redirect_url.find(host) > -1:
+                        redirect_url = self._sesh.prepare_url(redirect_url)
+                        return HttpResponseRedirect('%s%s=%s' % (redirect_url, name, 
+                                                             session_key)) 
+                    else:
+                        return HttpResponseRedirect(redirect_url)
 
             def new_url(m):
                 anchor_value = ""

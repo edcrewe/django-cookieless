@@ -1,6 +1,11 @@
 Changelog
 =========
 
+0.5 - 14th November 2012
+------------------------
+
+- Only rewrite redirect URLs if USE_GET is True and its the same domain
+
 0.4 - 9th November 2012
 -----------------------
 
