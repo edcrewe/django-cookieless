@@ -1,6 +1,12 @@
 Changelog
 =========
 
+0.6 - 21st November 2012
+------------------------
+
+- Never use the cookie for session for decorated views since it may break sessions passed by
+  cookieless means
+
 0.5 - 14th November 2012
 ------------------------
 
