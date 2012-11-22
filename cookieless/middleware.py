@@ -1,6 +1,7 @@
 #-*- coding:utf-8 -*-import time
 import re, pdb, time
 
+import django.dispatch
 from django.core.urlresolvers import resolve
 from django.conf import settings
 from django.utils.cache import patch_vary_headers
@@ -12,6 +13,12 @@ from django.contrib.sessions.middleware import SessionMiddleware
 from cookieless.utils import CryptSession
 from cookieless.config import LINKS_RE, DEFAULT_SETTINGS
 
+# Add a signal as a hook for the creation or saving of cookieless sessions
+# since these may need different handling to normal cookie based ones
+# NB: There is the django.contrib.sessions.models.Session model to hook to, 
+#     but creates and saves happen later and for both cookie and cookieless sessions
+cookieless_signal = django.dispatch.Signal() 
+
 class CookielessSessionMiddleware(object):
     """ Django snippets julio carlos and Ivscar 
         http://djangosnippets.org/snippets/1540/
@@ -22,6 +29,7 @@ class CookielessSessionMiddleware(object):
         with 'cookieless.middleware.CookielessSessionMiddleware'
 
         NB: Remember only decorated methods are cookieless
+        cookieless sessions get the no_cookies = True key added
     """
 
     def __init__(self):
@@ -49,8 +57,10 @@ class CookielessSessionMiddleware(object):
         name = settings.SESSION_COOKIE_NAME
         session_key = ''
         match = resolve(request.path)
+        no_cookies = False
 
         if match and getattr(match.func, 'no_cookies', False):
+            no_cookies = True
             session_key = self._sesh.decrypt(request, 
                                              request.POST.get(name, None))
             if not session_key and self.settings.get('USE_GET', False):
@@ -72,6 +82,9 @@ class CookielessSessionMiddleware(object):
         # If the session_key isn't tied to a session - create a new one
         if not session_key:
             request.session = self.engine.SessionStore() 
+            if no_cookies:
+                request.session['no_cookies'] = True
+                cookieless_signal.send(sender=request, created=True)
             request.session.save()
 
     def process_response(self, request, response):
@@ -89,8 +102,10 @@ class CookielessSessionMiddleware(object):
                     # - may be attached to a user - so always start a new separate one
                     cookie_key = request.COOKIES.get(settings.SESSION_COOKIE_NAME, '')
                     if cookie_key == request.session.session_key:
-                        request.session = self.engine.SessionStore() 
+                        request.session = self.engine.SessionStore()
+                        request.session['no_cookies'] = True
                         request.session.save()
+                        cookieless_signal.send(sender=request, created=True)
                 if self.settings.get('DELETE_COOKIES', False):
                     # Blat any existing cookies
                     for key in request.COOKIES.keys():
@@ -117,8 +132,9 @@ class CookielessSessionMiddleware(object):
                         max_age = request.session.get_expiry_age()
                         expires_time = time.time() + max_age
                         expires = cookie_date(expires_time)
-                # Save the session data and refresh the client cookie.
+                # Save the session data and fire a custom signal
                 request.session.save()
+                cookieless_signal.send(sender=request, created=False)
             return response
         else:
             return self.standard_session.process_response(request, response)

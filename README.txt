@@ -30,6 +30,11 @@ As another safety measure, handling of GET requests can be turned off, so that t
 
 Please NOTE: It is not advisable to use this package without some form of the above restrictions being in place. 
 
+For the purposes of using both cookie based and cookieless sessions together, there is a
+custom cookieless_signal and a 'no_cookies' flag when cookieless sessions are saved.
+
+Both cater for hooking up custom code for handling these less secure sessions. 
+
 The package provides a decorator utility to turn off cookie setting for particular views (which also sets the csrf_exempt flag).
 
 The package also handles the case of session handling for anonymous users with cookies disabled in the browser.

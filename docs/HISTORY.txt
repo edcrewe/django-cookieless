@@ -1,6 +1,12 @@
 Changelog
 =========
 
+0.7 - 22nd November 2012
+------------------------
+
+- Add a cookieless_signal to allow custom code to be hooked to cookieless sessions
+- Add a no_cookies marker key to cookieless sessions for the same reason
+
 0.6 - 21st November 2012
 ------------------------
 
