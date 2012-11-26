@@ -7,7 +7,7 @@ from django.conf import settings
 from django.utils.cache import patch_vary_headers
 from django.utils.http import cookie_date
 from django.utils.importlib import import_module
-from django.http  import  HttpResponseRedirect
+from django.http  import  HttpResponseRedirect, HttpResponse
 from django.contrib.sessions.middleware import SessionMiddleware
 # Obscure the session id when passing it around in HTML
 from cookieless.utils import CryptSession
@@ -58,11 +58,12 @@ class CookielessSessionMiddleware(object):
         session_key = ''
         match = resolve(request.path)
         no_cookies = False
-
+        
         if match and getattr(match.func, 'no_cookies', False):
             no_cookies = True
-            session_key = self._sesh.decrypt(request, 
-                                             request.POST.get(name, None))
+            if request.POST:
+                session_key = self._sesh.decrypt(request, 
+                                                 request.POST.get(name, None))
             if not session_key and self.settings.get('USE_GET', False):
                 session_key = self._sesh.decrypt(request, 
                                                  request.GET.get(name, ''))
@@ -84,8 +85,11 @@ class CookielessSessionMiddleware(object):
             request.session = self.engine.SessionStore() 
             if no_cookies:
                 request.session['no_cookies'] = True
-                cookieless_signal.send(sender=request, created=True)
+                # Flag it here so we can send created session signal 
+                # with data later on in process_response
+                request.session['created_cookieless'] = True
             request.session.save()
+
 
     def process_response(self, request, response):
         """
@@ -104,8 +108,8 @@ class CookielessSessionMiddleware(object):
                     if cookie_key == request.session.session_key:
                         request.session = self.engine.SessionStore()
                         request.session['no_cookies'] = True
+                        request.session['created_cookieless'] = True
                         request.session.save()
-                        cookieless_signal.send(sender=request, created=True)
                 if self.settings.get('DELETE_COOKIES', False):
                     # Blat any existing cookies
                     for key in request.COOKIES.keys():
@@ -118,6 +122,10 @@ class CookielessSessionMiddleware(object):
             #              but dont set the cookie
             if self.settings.get('REWRITE', False):
                 response = self.nocookies_response(request, response)
+            # Check for created flag for signal and turn off
+            created = request.session.get('created_cookieless', False)
+            if created:
+                request.session['created_cookieless'] = False
             try:
                 accessed = request.session.accessed
                 modified = request.session.modified
@@ -132,9 +140,9 @@ class CookielessSessionMiddleware(object):
                         max_age = request.session.get_expiry_age()
                         expires_time = time.time() + max_age
                         expires = cookie_date(expires_time)
-                # Save the session data and fire a custom signal
-                request.session.save()
-                cookieless_signal.send(sender=request, created=False)
+                    # Save the session data 
+                    request.session.save()
+                    cookieless_signal.send(sender=request, created=created)
             return response
         else:
             return self.standard_session.process_response(request, response)
@@ -177,14 +185,15 @@ class CookielessSessionMiddleware(object):
                 except:
                     pass
 
-            repl_form = '''<div><input type="hidden" name="%s" value="%s" />
-                           </div></form>'''
-            repl_form = repl_form % (name, session_key)
-
-            try:
-                response.content = self._re_forms.sub(repl_form, response.content)
-            except:
-                pass
+            # Check in case response has already got a manual session_id inserted
+            repl_form = '<input type="hidden" name="%s" ' % name
+            if response.content.find(repl_form) == -1:
+                repl_form = '''%s value="%s" />
+                               </form>''' % (repl_form, session_key)
+                try:
+                    response.content = self._re_forms.sub(repl_form, response.content)
+                except:
+                    pass
             return response
         else:
             return response        

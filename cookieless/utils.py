@@ -50,7 +50,6 @@ class CryptSession(object):
         except:
             return ''
  
-
     def key_tuple(self, request):
         """ For use in generated html """
         return (settings.SESSION_COOKIE_NAME, 
