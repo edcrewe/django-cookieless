@@ -116,7 +116,8 @@ class CookielessSessionMiddleware(object):
                         response.delete_cookie(key)
 
             # Dont set any new cookies
-            response.cookies.clear()
+            if hasattr(response, 'cookies'):
+                response.cookies.clear()
 
             # cookieless - do same as standard process response
             #              but dont set the cookie
@@ -186,8 +187,8 @@ class CookielessSessionMiddleware(object):
                     pass
 
             # Check in case response has already got a manual session_id inserted
-            repl_form = '<input type="hidden" name="%s" ' % name
-            if response.content.find(repl_form) == -1:
+            repl_form = '<input type="hidden" name="%s"' % name
+            if hasattr(response, 'content') and response.content.find(repl_form) == -1:
                 repl_form = '''%s value="%s" />
                                </form>''' % (repl_form, session_key)
                 try:

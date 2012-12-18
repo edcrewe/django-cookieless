@@ -2,12 +2,13 @@ from django.conf import settings
 from django.utils import unittest
 from django.test.client import Client
 from django.test.client import RequestFactory
+from django.test import TestCase
 from django.utils.importlib import import_module
 
 from cookieless.utils import CryptSession
 from cookieless.config import DEFAULT_SETTINGS
 
-class FuncTestCase(unittest.TestCase):
+class FuncTestCase(TestCase):
     """
     Check the cookie is not present but session data is maintained
     Uses the tests.settings urls and views to functionally test
@@ -27,17 +28,34 @@ class FuncTestCase(unittest.TestCase):
         self.crypt_sesh = CryptSession()
         self.factory = RequestFactory()
         self.skey = settings.SESSION_COOKIE_NAME
+        # This is a bit crap - because matching is fragile and also its 
+        # reused to split up and grab the session id - TODO: replace with regex
         self.hidden = '<input type="hidden" name="%s" value="' % self.skey
 
-    def get_session(self, response):
+    def get_session(self, response, url='/'):
         """ Extract id from response and retrieve session """
-        parts = response.content.split(self.hidden)
-        if len(parts) == 1:
-            return {}, ''
-        parts = parts[1].split('"')
-        session_id = parts[0]
-        request = self.factory.get('/')
-        session_key = self.crypt_sesh.decrypt(request, session_id)
+        # post or get
+        parts = ''
+        if not response.content:
+            print 'RESPONSE FAILED: %s' % response.__class__
+        if response.content.find(self.hidden) > -1:
+            splitter = self.hidden
+        else:
+            splitter = '%s=' % self.skey
+        parts = response.content.split(splitter, 1)
+        session_key = ''
+        if len(parts) > 1:
+            parts = parts[1].split('"', 1)
+            session_id = parts[0]
+            request = self.factory.get(url, REMOTE_ADDR='127.0.0.1',
+                                       HTTP_USER_AGENT='unknown browser')
+            try:
+                session_key = self.crypt_sesh.decrypt(request, session_id)
+            except:
+                # Silently start new session in case fake session_id format causes error
+                pass
+        else:
+            session_id = ''
         try:
             session = self.engine.SessionStore(session_key)
         except:
@@ -50,16 +68,16 @@ class FuncTestCase(unittest.TestCase):
         response = self.browser.get('/')
         url = '?%s=' % settings.SESSION_COOKIE_NAME
         # Check form session id is set
-        self.assertTrue(self.hidden in response.content)
+        self.assertContains(response, self.hidden)
         self.assertTrue(url in response.content)
 
     def test_session_in_rewritten_html(self):
         """ Confirm session is rewritten into html """
         self.settings['REWRITE'] = True
         response = self.browser.get('/plain-view.html')
-        url = '?%s=' % settings.SESSION_COOKIE_NAME
+        url = '?%s=' % self.skey
         # Check form session id is set
-        self.assertTrue(self.hidden in response.content)
+        self.assertContains(response, self.hidden)
         self.assertTrue(url in response.content)
 
     def test_session_no_url_rewrite_option(self):
@@ -69,7 +87,7 @@ class FuncTestCase(unittest.TestCase):
         response = self.browser.get('/plain-view.html')
         url = '?%s=' % settings.SESSION_COOKIE_NAME
         # Check form session id is set but urls aren't
-        self.assertTrue(self.hidden in response.content)
+        self.assertContains(response, self.hidden)
         self.assertTrue(url not in response.content)
 
     def test_disabled_for_testing_flag(self):
@@ -86,17 +104,18 @@ class FuncTestCase(unittest.TestCase):
         """
         self.settings['REWRITE'] = False
         self.settings['URL_SPECIFIC'] = False
-        response = self.browser.get('/')
+        response = self.browser.get('/index.html')
         session, session_id = self.get_session(response)
+        session_key = session.session_key
         self.assertTrue('classview' in session.keys())
-        self.assertEqual(len(session.keys()), 2)
+        self.assertFalse(session['created_cookieless'])
         # Post form to second page
         postdict = { self.skey : session_id, }
-        self.browser.post("/function-view.html", postdict)
+        response = self.browser.post("/function-view.html", postdict)
         # Get session again
-        session = self.engine.SessionStore(session.session_key)
+        session, session_id = self.get_session(response)
         self.assertTrue('funcview' in session.keys())
-        self.assertEqual(len(session.keys()), 3)
+        self.assertEqual(session.session_key, session_key)
 
     def test_session_not_retained_other_url(self):
         """ Get the first page then retrieve the session
@@ -104,21 +123,26 @@ class FuncTestCase(unittest.TestCase):
         """
         self.settings['REWRITE'] = False
         self.settings['URL_SPECIFIC'] = True
-        response = self.browser.get('/')
-        session, session_id = self.get_session(response)
+        url = '/index.html'
+        response = self.browser.get(url)
+        session, session_id = self.get_session(response, url)
+        start_session_key = session.session_key
+        self.assertNotEqual(session.keys(), [])
         self.assertTrue('classview' in session.keys())
-        self.assertEqual(len(session.keys()), 2)
+        postdict = { self.skey : session_id, }
         # Post form to second page where session is restarted
-        postdict = { self.skey : session_id, }
-        self.browser.post("/function-view.html", postdict)
-        session = self.engine.SessionStore(session.session_key)
-        self.assertTrue('funcview' not in session.keys())
-        self.assertEqual(len(session.keys()), 2)
+        url = "/function-view.html"
+        response = self.browser.post(url, postdict)
+        session, session_id = self.get_session(response, url)
+        self.assertTrue('funcview' in session.keys())
+        self.assertNotEqual(session.session_key, start_session_key)
         # Post form back to first page where session is retained
-        postdict = { self.skey : session_id, }
-        self.browser.post("/", postdict)
-        session = self.engine.SessionStore(session.session_key)
-        self.assertEqual(len(session.keys()), 3)
+        # NOTE: cannot post back to "/" need a named page or posts are rejected
+        url = '/index.html'
+        response = self.browser.post(url, postdict)
+        session, session_id = self.get_session(response, url)
+        self.assertFalse(session.get('created_cookieless', False))
+        self.assertEqual(session.session_key, start_session_key)
 
 
     def test_session_not_retained_other_host(self):
@@ -127,17 +151,18 @@ class FuncTestCase(unittest.TestCase):
         """
         self.settings['REWRITE'] = False
         self.settings['URL_SPECIFIC'] = True
-        response = self.browser.get('/')
-        session, session_id = self.get_session(response)
+        url = '/index.html'
+        response = self.browser.get(url)
+        session, session_id = self.get_session(response, url)
+        start_session_key = session.session_key
         self.assertTrue('classview' in session.keys())
-        self.assertEqual(len(session.keys()), 2)
+        postdict = { self.skey : session_id, }
         # Post form back to first page where other session is started
-        postdict = { self.skey : session_id, }
-        self.browser.post("/", postdict, SERVER_NAME='another_testserver')
-        session = self.engine.SessionStore(session.session_key)
-        self.assertEqual(len(session.keys()), 2)
+        response = self.browser.post(url, postdict, SERVER_NAME='www.othertestserver.org')
+        session, session_id = self.get_session(response, url)
+        self.assertNotEqual(session.session_key, start_session_key)
         # Post form back to first page where session is retained
-        postdict = { self.skey : session_id, }
-        self.browser.post("/", postdict)
-        session = self.engine.SessionStore(session.session_key)
-        self.assertEqual(len(session.keys()), 3)
+        response = self.browser.post(url, postdict)
+        session, session_id = self.get_session(response, url)
+        self.assertFalse(session.get('created_cookieless', False))
+        self.assertEqual(session.session_key, start_session_key)

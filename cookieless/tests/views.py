@@ -48,3 +48,11 @@ class MyClassView(TemplateView):
         context['session_data'] = session_data(self.request)
         return context
 
+    def post(self, request, *args, **kwargs):
+        """ A post method is required for django class views that don't have it
+            or they throw django.http.HttpResponseNotAllowed and wipe response.content
+            (Or at least they do for the test browser)
+        """
+        context = super(MyClassView, self).get_context_data(**kwargs)
+        context['session_data'] = session_data(self.request)
+        return self.render_to_response(context)

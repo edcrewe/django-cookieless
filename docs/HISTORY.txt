@@ -8,6 +8,8 @@ Changelog
 - Pass a created flag for cookieless sessions to the signal
 - Add a no_cookies marker key to cookieless sessions for the same reason
 - Check automatic form rewrites to ensure that sessions are not already set manually 
+- Fix tests check of hidden session_id broken by extra space in hidden field
+- Add post method for test class view so test posts don't throw HttpResponseNotAllowed
 
 0.6 - 21st November 2012
 ------------------------
