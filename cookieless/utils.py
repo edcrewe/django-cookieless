@@ -69,5 +69,12 @@ class CryptSession(object):
             specific += request.META.get('HTTP_USER_AGENT', 'unknown browser')
         if specific:
             secret = crypt(secret, specific + self.secret) 
-            secret = secret.encode('hex')[-16:]
+            new_secret = ''
+            # Grab ascii from the whole specific string 
+            for i in range(0, len(secret), int(len(secret)/16)):
+                try:
+                    new_secret += secret[i].encode('ascii') 
+                except:
+                    new_secret += secret[i].encode('hex')[0] 
+            secret = new_secret[:16]
         return secret
