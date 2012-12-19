@@ -1,13 +1,12 @@
 #-*- coding:utf-8 -*-import time
-import re, pdb, time
+import re, time
 
 import django.dispatch
 from django.core.urlresolvers import resolve
 from django.conf import settings
-from django.utils.cache import patch_vary_headers
 from django.utils.http import cookie_date
 from django.utils.importlib import import_module
-from django.http  import  HttpResponseRedirect, HttpResponse
+from django.http  import  HttpResponseRedirect
 from django.contrib.sessions.middleware import SessionMiddleware
 # Obscure the session id when passing it around in HTML
 from cookieless.utils import CryptSession
@@ -128,19 +127,12 @@ class CookielessSessionMiddleware(object):
             if created:
                 request.session['created_cookieless'] = False
             try:
-                accessed = request.session.accessed
+                # accessed = request.session.accessed
                 modified = request.session.modified
             except AttributeError:
                 pass
             else:
                 if modified or settings.SESSION_SAVE_EVERY_REQUEST:
-                    if request.session.get_expire_at_browser_close():
-                        max_age = None
-                        expires = None
-                    else:
-                        max_age = request.session.get_expiry_age()
-                        expires_time = time.time() + max_age
-                        expires = cookie_date(expires_time)
                     # Save the session data 
                     request.session.save()
                     cookieless_signal.send(sender=request, created=created)
@@ -166,17 +158,17 @@ class CookielessSessionMiddleware(object):
                     else:
                         return HttpResponseRedirect(redirect_url)
 
-            def new_url(m):
+            def new_url(match):
                 anchor_value = ""
-                if m.groupdict().get("anchor"): 
-                    anchor_value = m.groupdict().get("anchor")
+                if match.groupdict().get("anchor"): 
+                    anchor_value = match.groupdict().get("anchor")
                 return_str = '<a%shref="%s%s=%s%s"%s>' % (
-                                 m.groupdict()['pre_href'],
-                                 self._sesh.prepare_url(m.groupdict()['in_href']),
+                                 match.groupdict()['pre_href'],
+                                 self._sesh.prepare_url(match.groupdict()['in_href']),
                                  name,
                                  session_key,
                                  anchor_value,
-                                 m.groupdict()['post_href']
+                                 match.groupdict()['post_href']
                                  )
                 return return_str                                 
 
