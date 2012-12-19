@@ -163,11 +163,17 @@ INSTALLED_APPS = (
 
 # For CI testing of releases
 try:
+    import django_jenkins
+    CI = True
+except:
+    CI = False
+
+if CI:
     INSTALLED_APPS += ('django_jenkins',)
     PROJECT_APPS = ('cookieless',)
-except:
-    pass
-
+    JENKINS_TASKS = ('django_jenkins.tasks.run_pylint',
+                     'django_jenkins.tasks.with_coverage',
+                     'django_jenkins.tasks.django_tests',)
 
 # A sample logging configuration. The only tangible logging
 # performed by this configuration is to send an email to
