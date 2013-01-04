@@ -1,10 +1,9 @@
 #-*- coding:utf-8 -*-import time
-import re, time
+import re
 
 import django.dispatch
 from django.core.urlresolvers import resolve
 from django.conf import settings
-from django.utils.http import cookie_date
 from django.utils.importlib import import_module
 from django.http  import  HttpResponseRedirect
 from django.contrib.sessions.middleware import SessionMiddleware

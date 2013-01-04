@@ -25,7 +25,7 @@ class CryptSession(object):
         if not sessionid:
             return ''
         secret = self._secret(request)
-        return crypt(secret, sessionid).encode('hex')
+        return crypt(secret, sessionid).encode('base64')
 
     def decrypt(self, request, sessionid):
         """ Avoid showing plain sessionids 
@@ -44,7 +44,7 @@ class CryptSession(object):
             if url.hostname not in self.settings['HOSTS']:
                 err = '%s is unauthorised' % url.hostname
                 raise Exception(err)
-        session_key = crypt(secret, sessionid.decode('hex'))
+        session_key = crypt(secret, sessionid.decode('base64'))
         try:
             return unicode(session_key)
         except:
@@ -75,6 +75,6 @@ class CryptSession(object):
                 try:
                     new_secret += secret[i].encode('ascii') 
                 except:
-                    new_secret += secret[i].encode('hex')[0] 
+                    new_secret += secret[i].encode('base64')[0] 
             secret = new_secret[:16]
         return secret
