@@ -39,7 +39,7 @@ exchanged securely)
 
 import struct
 
-def crypt(key,data,iv='\00\00\00\00\00\00\00\00', n=32):
+def crypt(key, data, iv='\00\00\00\00\00\00\00\00', n=32):
     """
         Encrypt/decrypt variable length string using XTEA cypher as
         key generator (OFB mode)
@@ -61,7 +61,7 @@ def crypt(key,data,iv='\00\00\00\00\00\00\00\00', n=32):
             iv = xtea_encrypt(key, iv, n)
             for k in iv:
                 yield ord(k)
-    xor = [ chr(x^y) for (x, y) in zip(map(ord,data),keygen(key, iv, n)) ]
+    xor = [ chr(x^y) for (x, y) in zip(map(ord, data), keygen(key, iv, n)) ]
     return "".join(xor)
 
 def xtea_encrypt(key, block, n=32, endian="!"):
@@ -84,16 +84,16 @@ def xtea_encrypt(key, block, n=32, endian="!"):
         'ea0c3d7c1c22557f'
 
     """
-    v0,v1 = struct.unpack(endian+"2L", block)
-    k = struct.unpack(endian+"4L", key)
+    value0, value1 = struct.unpack(endian+"2L", block)
+    klist = struct.unpack(endian+"4L", key)
     sumup = 0L
     delta = 0x9e3779b9L
     mask = 0xffffffffL
     for round in range(n):
-        v0 = (v0 + (((v1<<4 ^ v1>>5) + v1) ^ (sumup + k[sumup & 3]))) & mask
+        value0 = (value0 + (((value1<<4 ^ value1>>5) + value1) ^ (sumup + klist[sumup & 3]))) & mask
         sumup = (sumup + delta) & mask
-        v1 = (v1 + (((v0<<4 ^ v0>>5) + v0) ^ (sumup + k[sumup>>11 & 3]))) & mask
-    return struct.pack(endian + "2L", v0, v1)
+        value1 = (value1 + (((value0<<4 ^ value0>>5) + value0) ^ (sumup + klist[sumup>>11 & 3]))) & mask
+    return struct.pack(endian + "2L", value0, value1)
 
 def xtea_decrypt(key, block, n=32, endian="!"):
     """
@@ -115,15 +115,15 @@ def xtea_decrypt(key, block, n=32, endian="!"):
         'ABCDEFGH'
 
     """
-    v0, v1 = struct.unpack(endian+"2L", block)
-    k = struct.unpack(endian + "4L", key)
-    delta,mask = 0x9e3779b9L,0xffffffffL
+    value0, value1 = struct.unpack(endian+"2L", block)
+    klist = struct.unpack(endian + "4L", key)
+    delta, mask = 0x9e3779b9L,0xffffffffL
     sum = (delta * n) & mask
     for round in range(n):
-        v1 = (v1 - (((v0<<4 ^ v0>>5) + v0) ^ (sum + k[sum>>11 & 3]))) & mask
+        value1 = (value1 - (((value0<<4 ^ value0>>5) + value0) ^ (sum + klist[sum>>11 & 3]))) & mask
         sum = (sum - delta) & mask
-        v0 = (v0 - (((v1<<4 ^ v1>>5) + v1) ^ (sum + k[sum & 3]))) & mask
-    return struct.pack(endian+"2L",v0,v1)
+        value0 = (value0 - (((value1<<4 ^ value1>>5) + value1) ^ (sum + klist[sum & 3]))) & mask
+    return struct.pack(endian+"2L", value0, value1)
 
 if __name__ == "__main__":
     import doctest

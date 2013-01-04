@@ -1,6 +1,12 @@
 Changelog
 =========
 
+0.8 - 4th January 2013
+----------------------
+
+- Clean up some pylint
+- Switch to base64 encoding to shorten encrypted session ids
+
 0.7 - 18th December 2012
 ------------------------
 
