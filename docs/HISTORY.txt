@@ -1,6 +1,11 @@
 Changelog
 =========
 
+0.9 - UNRELEASED
+----------------
+
+- Remove line return at end of session id introduced by base64 encoding
+
 0.8 - 4th January 2013
 ----------------------
 
