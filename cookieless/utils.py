@@ -21,11 +21,16 @@ class CryptSession(object):
         return patt % (url,)
 
     def encrypt(self, request, sessionid):
-        """ Avoid showing plain sessionids """  
+        """ Avoid showing plain sessionids 
+            Use base64 - but strip the line return it adds
+        """  
         if not sessionid:
             return ''
         secret = self._secret(request)
-        return crypt(secret, sessionid).encode('base64')
+        session_key = crypt(secret, sessionid).encode('base64')
+        if session_key.endswith("\n"):
+            session_key = session_key[:-1]
+        return session_key
 
     def decrypt(self, request, sessionid):
         """ Avoid showing plain sessionids 
