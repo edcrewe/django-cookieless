@@ -1,3 +1,8 @@
+import re
+
+from gzip import GzipFile
+from StringIO import StringIO
+
 from django.utils import unittest
 from django.conf import settings
 
@@ -144,3 +149,28 @@ class FuncTestCase(BaseFuncTestCase):
         session, session_id = self.get_session(response, url, agent)
         self.assertFalse(session.get('created_cookieless', False))
         self.assertEqual(session.session_key, start_session_key)
+
+
+    def test_breach_mitigation(self):
+        self.settings['REWRITE'] = True
+        self.settings['USE_GET'] = True
+        url = '/plain-view.html'
+        response = self.browser.get(url)
+        self.assertContains(response, "NONCE",
+                            msg_prefix="Check that our output contains the expected nonce")
+
+        search_str = r'"/\?'+settings.SESSION_COOKIE_NAME+'=(.*?)"'
+        m = re.search(search_str, response.content)
+        session_key = m.group(1)
+        params = {settings.SESSION_COOKIE_NAME:session_key}
+
+        array = [len(self._compress(self.browser.get(url, params).content)) for x in range(100)]
+        self.assertTrue(len(set(array)) > 1,
+                        "assert that the length of subsequent requests when compressed have a different length")
+    
+    def _compress(self, string):
+        contents = StringIO()
+        gzfile = GzipFile(fileobj = contents, mode='wb')
+        gzfile.write(string)
+        gzfile.close()
+        return contents.getvalue()
