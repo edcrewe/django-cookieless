@@ -1,7 +1,5 @@
 #-*- coding:utf-8 -*-
 import re
-import string
-import random
 import django.dispatch
 from django.core.urlresolvers import resolve
 from django.conf import settings
@@ -189,14 +187,9 @@ class CookielessSessionMiddleware(object):
                 except:
                     pass
             
-            nonce = "<!-- NONCE:%s -->" % self._random_string_generator(30)
-            response.content = self._re_body.sub(nonce, response.content)
             return response
         else:
-            return response        
-
-    def _random_string_generator(self, length):
-        return ''.join(random.choice(string.ascii_letters + string.digits + ' ') for x in range(length))
+            return response
 
 
 

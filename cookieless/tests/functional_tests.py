@@ -152,14 +152,16 @@ class FuncTestCase(BaseFuncTestCase):
 
 
     def test_breach_mitigation(self):
+        """ 
+        Check that compression of repeated requests leads to differing string lengths
+        """
         self.settings['REWRITE'] = True
         self.settings['USE_GET'] = True
         url = '/plain-view.html'
         response = self.browser.get(url)
-        self.assertContains(response, "NONCE",
-                            msg_prefix="Check that our output contains the expected nonce")
 
         search_str = r'"/\?'+settings.SESSION_COOKIE_NAME+'=(.*?)"'
+        
         m = re.search(search_str, response.content)
         session_key = m.group(1)
         params = {settings.SESSION_COOKIE_NAME:session_key}
