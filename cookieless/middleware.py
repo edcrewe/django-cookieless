@@ -1,6 +1,5 @@
-#-*- coding:utf-8 -*-import time
+#-*- coding:utf-8 -*-
 import re
-
 import django.dispatch
 from django.core.urlresolvers import resolve
 from django.conf import settings
@@ -37,6 +36,7 @@ class CookielessSessionMiddleware(object):
         self.settings = getattr(settings, 'COOKIELESS', DEFAULT_SETTINGS)
         self._re_links = re.compile(LINKS_RE, re.I)
         self._re_forms = re.compile('</form>', re.I)
+        self._re_body = re.compile('</body>', re.I)
         self._sesh = CryptSession()
         self.standard_session = SessionMiddleware()
         self.engine = import_module(settings.SESSION_ENGINE)
@@ -186,9 +186,10 @@ class CookielessSessionMiddleware(object):
                     response.content = self._re_forms.sub(repl_form, response.content)
                 except:
                     pass
+            
             return response
         else:
-            return response        
+            return response
 
 
 

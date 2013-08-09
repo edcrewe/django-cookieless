@@ -1,4 +1,7 @@
 """ Obscure the session id when passing it around in HTML """
+import string
+import random
+
 from django.conf import settings
 from urlparse import urlparse
 from cookieless.xteacrypt import crypt
@@ -26,11 +29,16 @@ class CryptSession(object):
         """  
         if not sessionid:
             return ''
+        
         secret = self._secret(request)
         session_key = crypt(secret, sessionid).encode('base64')
+        nonce = self._random_string_generator(20)
+        session_key = self.xor(nonce, session_key).encode('base64')
+
         if session_key.endswith("\n"):
             session_key = session_key[:-1]
-        return session_key
+
+        return "%s:%s" % (nonce, session_key)
 
     def decrypt(self, request, sessionid):
         """ Avoid showing plain sessionids 
@@ -39,6 +47,10 @@ class CryptSession(object):
         """
         if not sessionid:
             return ''
+
+        (nonce,sessionid) = sessionid.split(':', 1)
+        sessionid = self.xor(nonce, sessionid.decode('base64'))
+
         secret = self._secret(request)
         if self.settings.get('HOSTS', []):
             referer = request.META.get('HTTP_REFERER', 'None')
@@ -49,6 +61,7 @@ class CryptSession(object):
             if url.hostname not in self.settings['HOSTS']:
                 err = '%s is unauthorised' % url.hostname
                 raise Exception(err)
+        
         session_key = crypt(secret, sessionid.decode('base64'))
         try:
             return unicode(session_key)
@@ -83,3 +96,14 @@ class CryptSession(object):
                     new_secret += secret[i].encode('base64')[0] 
             secret = new_secret[:16]
         return secret
+
+    def xor(self, s1, s2):
+        # if s1 and s2 are not the same length, pad the smaller one
+        if len(s2) < len(s1):
+            (s1,s2) = (s2,s1)
+        if len(s1) < len(s2):
+            s1 = s1 * ((len(s2)/len(s1))+1)
+        return ''.join(chr(ord(a) ^ ord(b)) for a,b in zip(s1,s2))
+    
+    def _random_string_generator(self, length):
+        return ''.join(random.choice(string.ascii_letters + string.digits) for x in range(length))
