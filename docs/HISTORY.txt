@@ -1,10 +1,18 @@
 Changelog
 =========
 
-0.9 - UNRELEASED
-----------------
+0.9 - 18th August 2013
+----------------------
+
+- Add protection against breach attack via nonce encryption 
+  http://breachattack.com/ 
+- Added related test
+
+[Chris Bailey]
 
 - Remove line return at end of session id introduced by base64 encoding
+
+[Ed Crewe]
 
 0.8 - 4th January 2013
 ----------------------
