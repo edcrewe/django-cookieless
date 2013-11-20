@@ -29,7 +29,7 @@ COOKIELESS['NO_COOKIE_PERSIST'] = True
 COOKIELESS['URL_SPECIFIC'] = True
 
 # Delete any cookies found when on a no_cookies URL  
-COOKIELESS['COOKIE_DELETE']
+COOKIELESS['DELETE_COOKIES']
 
 #############################
 

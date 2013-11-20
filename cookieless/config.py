@@ -7,5 +7,5 @@ DEFAULT_SETTINGS = {'REWRITE' : True,
                     'HOSTS' : [],
                     'NO_COOKIE_PERSIST' : True,
                     'URL_SPECIFIC' : False,
-                    'COOKIES_DELETE' : False
+                    'DELETE_COOKIES' : False
                     }
