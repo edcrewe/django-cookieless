@@ -1,6 +1,15 @@
 Changelog
 =========
 
+1.0 - 24th February 2014
+------------------------
+
+- Test with latest Django 1.6.2
+- Enforce session keys as strings if the session fails to save
+  Due to the move of the session serializer to JSON in Django 1.6 
+
+[Ed Crewe]
+
 0.9 - 18th August 2013
 ----------------------
 
