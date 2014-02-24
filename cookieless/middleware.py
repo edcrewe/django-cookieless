@@ -136,11 +136,13 @@ class CookielessSessionMiddleware(object):
                         # Save the session data 
                         request.session.save()
                     except:
-                        # Ensure all keys are strings
+                        # Ensure all keys are strings - required by move to JSON serializer with 1.6
                         for key in request.session.keys():
-                            if type(key) != type(''):
-                                request.session[str(key)] = request.session[key]
+                            if type(key) not in (type(''), type(u'')):
+                                request.session[str(key)] = str(request.session[key])
                                 del request.session[key]
+                            #elif type(value) not in (type(''), type(u''), type(True)):
+                            #    request.session[key] = str(request.session[key])
                         request.session.save()
                     cookieless_signal.send(sender=request, created=created)
             return response

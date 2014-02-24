@@ -39,8 +39,7 @@ class MyClassView(TemplateView):
         """ Add a session value each time the page is refreshed """
         request = args[0]
         request.session['classview'] = 'MyClassView'
-        now = datetime.datetime.now()
-        request.session[now] = 'more stuff'
+        request.session[datetime.datetime.now()] = 'more stuff'
         return super(MyClassView, self).dispatch(*args, **kwargs)
     
     def get_context_data(self, **kwargs):
