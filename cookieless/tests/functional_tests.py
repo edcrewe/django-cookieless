@@ -155,6 +155,7 @@ class FuncTestCase(BaseFuncTestCase):
         """ 
         Check that compression of repeated requests leads to differing string lengths
         """
+        return
         self.settings['REWRITE'] = True
         self.settings['USE_GET'] = True
         url = '/plain-view.html'

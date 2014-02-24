@@ -18,7 +18,7 @@ def my_function_view(request):
     """ Test function view with manually constructed sesh url """
     request.session['funcview'] = 'my_function_view'
     html = "<html><body><h1>Function view</h1>"
-    html += '<p><a href="/?%s=%s">Class view</a></p><hr />' 
+    html += '<p><a href="/index.html?%s=%s">Class view</a></p><hr />' 
     html = html % CryptSession().key_tuple(request)
     html += session_data(request)  + '</body></html>'
     return HttpResponse(html)

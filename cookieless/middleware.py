@@ -132,8 +132,16 @@ class CookielessSessionMiddleware(object):
                 pass
             else:
                 if modified or settings.SESSION_SAVE_EVERY_REQUEST:
-                    # Save the session data 
-                    request.session.save()
+                    try:
+                        # Save the session data 
+                        request.session.save()
+                    except:
+                        # Ensure all keys are strings
+                        for key in request.session.keys():
+                            if type(key) != type(''):
+                                request.session[str(key)] = request.session[key]
+                                del request.session[key]
+                        request.session.save()
                     cookieless_signal.send(sender=request, created=created)
             return response
         else:
