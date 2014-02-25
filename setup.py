@@ -22,7 +22,7 @@ setup(name='django-cookieless',
       url='https://github.com/edcrewe/django-cookieless',
       license='Apache2',
       packages=find_packages(exclude=['ez_setup']),
-      namespace_packages=['cookieless'],
+      # namespace_packages=['cookieless'],
       include_package_data=True,
       zip_safe=False,
       install_requires=[
