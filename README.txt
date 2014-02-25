@@ -107,17 +107,19 @@ Tests
 
 The test suite sets up a simple application to test cookies manually, and to run the functional tests against.
 
-Note that if the egg is installed normally, the cookieless.tests application will probably not have write permissions
-so to run the tests install from src:
+To run the tests, you may want to install from src (or your branch):
 
 bin/pip install -e git+https://github.com/edcrewe/django-cookieless#egg=django-cookieless
 
-Or move the tests application out and install separately as a django app.
 Then run via:
 
-bin/django-admin.py or manage.py test cookieless --settings="cookieless.tests.settings"
+bin/django-admin.py or manage.py test cookieless.tests --settings=cookieless.tests.settings
 
-Note: cookieless/decorator.py
+(The package was changed from a namespace package due to the issue with pip 
+not installing the __init__ for running tests when it does a nspkg.pth file instead)
+
+cookieless/decorator.py
+-----------------------
 
 Because the django test browser has some session implementation specific mocking, 
 it fails to work if used directly against cookieless, so to stop it breaking other tests
