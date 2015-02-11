@@ -31,6 +31,10 @@ COOKIELESS['URL_SPECIFIC'] = True
 # Delete any cookies found when on a no_cookies URL  
 COOKIELESS['DELETE_COOKIES']
 
+# Specify what directory should be excluded from being cookieless
+# Most common setting is to exclude your admin directory 
+COOKIELESS['EXCLUDE_DIR'] = '/admin'
+
 #############################
 
 # Settings to be used when running unit tests

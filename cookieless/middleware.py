@@ -153,7 +153,8 @@ class CookielessSessionMiddleware(object):
         """ Option to rewrite forms and urls to add session automatically """
         name = settings.SESSION_COOKIE_NAME
         session_key = ''
-        if request.session.session_key and not request.path.startswith("/admin"):  
+        if request.session.session_key and \
+           not request.path.startswith(self.settings.get('EXCLUDE_DIR', '/admin')):  
             session_key = self._sesh.encrypt(request, request.session.session_key) 
 
             if self.settings.get('USE_GET', False) and session_key:
