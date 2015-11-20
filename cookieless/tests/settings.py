@@ -171,8 +171,8 @@ except:
 if CI:
     INSTALLED_APPS += ('django_jenkins',)
     PROJECT_APPS = ('cookieless.tests',)
-    JENKINS_TASKS = ('django_jenkins.tasks.run_pylint',
-                     'django_jenkins.tasks.with_coverage')
+    JENKINS_TASKS = ('django_jenkins.tasks.run_pylint',)
+                     # 0.18 needs --with-coverage again not 'django_jenkins.tasks.with_coverage')
 
 # A sample logging configuration. The only tangible logging
 # performed by this configuration is to send an email to
