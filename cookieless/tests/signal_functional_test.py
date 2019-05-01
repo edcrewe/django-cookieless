@@ -1,4 +1,5 @@
-from django.utils import unittest
+import unittest
+
 from django.conf import settings
 
 from cookieless.tests.base import BaseFuncTestCase
@@ -7,16 +8,19 @@ from cookieless.middleware import cookieless_signal
 signal = (None, None)
 scounter = 0
 
+
 def signal_me(**kwargs):
     """ Method to tie to signal for tests """
     global scounter, signal
-    request = kwargs.get('sender', '')
-    created = kwargs.get('created', '')
-    signal = (request, created) 
+    request = kwargs.get("sender", "")
+    created = kwargs.get("created", "")
+    signal = (request, created)
     scounter += 1
+
 
 # Send signals to method for testing
 cookieless_signal.connect(signal_me)
+
 
 class SignalFuncTestCase(BaseFuncTestCase):
     """
@@ -29,8 +33,8 @@ class SignalFuncTestCase(BaseFuncTestCase):
     """
 
     def test_signal(self):
-        """ Check that the signal is fired when a cookieless session is 
-            created or modified 
+        """ Check that the signal is fired when a cookieless session is
+            created or modified
         """
         global scounter, signal
         # Must reset signal since other tests will have triggered it
@@ -38,15 +42,15 @@ class SignalFuncTestCase(BaseFuncTestCase):
         signal = (None, None)
         scounter = 0
         self.assertEqual(signal, (None, None))
-        response = self.browser.get('/index.html')
+        response = self.browser.get("/index.html")
         session, session_id = self.get_session(response)
         self.assertNotEqual(signal, (None, None))
         # Check signal sent once and its created = True
         self.assertEqual(scounter, 1)
         self.assertTrue(signal[1])
-        # Post back to the page and check update signal fired 
+        # Post back to the page and check update signal fired
         # but created = False
-        postdict = { self.skey : session_id, }
-        response = self.browser.post('/index.html', postdict)
-        self.assertEqual(scounter, 2)        
+        postdict = {self.skey: session_id}
+        response = self.browser.post("/index.html", postdict)
+        self.assertEqual(scounter, 2)
         self.assertFalse(signal[1])
