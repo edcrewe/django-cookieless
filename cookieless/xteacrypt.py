@@ -1,11 +1,11 @@
-""" 
+"""
 XTEA Block Encryption Algorithm
 
 Author: Paul Chakravarti (paul_dot_chakravarti_at_gmail_dot_com)
 License: Public Domain
 
 This module provides a Python implementation of the XTEA block encryption
-algorithm (http://www.cix.co.uk/~klockstone/xtea.pdf). 
+algorithm (http://www.cix.co.uk/~klockstone/xtea.pdf).
 
 The module implements the basic XTEA block encryption algortithm
 (`xtea_encrypt`/`xtea_decrypt`) and also provides a higher level `crypt`
@@ -35,15 +35,16 @@ exchanged securely)
     >>> crypt('0123456789012345',z,iv)
     'Hello There'
 
-""" 
+"""
 
 import struct
 
-def crypt(key, data, iv='\00\00\00\00\00\00\00\00', n=32):
+
+def crypt(key, data, iv="\00\00\00\00\00\00\00\00", n=32):
     """
         Encrypt/decrypt variable length string using XTEA cypher as
         key generator (OFB mode)
-        * key = 128 bit (16 char) 
+        * key = 128 bit (16 char)
         * iv = 64 bit (8 char)
         * data = string (any length)
 
@@ -56,75 +57,95 @@ def crypt(key, data, iv='\00\00\00\00\00\00\00\00', n=32):
         True
 
     """
+
     def keygen(key, iv, n):
         while True:
             iv = xtea_encrypt(key, iv, n)
             for k in iv:
                 yield ord(k)
-    xor = [ chr(x^y) for (x, y) in zip(map(ord, data), keygen(key, iv, n)) ]
+
+    xor = [chr(x ^ y) for (x, y) in zip(map(ord, data), keygen(key, iv, n))]
     return "".join(xor)
+
 
 def xtea_encrypt(key, block, n=32, endian="!"):
     """
         Encrypt 64 bit data block using XTEA block cypher
-        * key = 128 bit (16 char) 
+        * key = 128 bit (16 char)
         * block = 64 bit (8 char)
         * n = rounds (default 32)
-        * endian = byte order (see 'struct' doc - default big/network) 
+        * endian = byte order (see 'struct' doc - default big/network)
 
         >>> z = xtea_encrypt('0123456789012345','ABCDEFGH')
         >>> z.encode('hex')
         'b67c01662ff6964a'
 
-        Only need to change byte order if sending/receiving from 
-        alternative endian implementation 
+        Only need to change byte order if sending/receiving from
+        alternative endian implementation
 
         >>> z = xtea_encrypt('0123456789012345','ABCDEFGH',endian="<")
         >>> z.encode('hex')
         'ea0c3d7c1c22557f'
 
     """
-    value0, value1 = struct.unpack(endian+"2L", block)
-    klist = struct.unpack(endian+"4L", key)
-    sumup = 0L
-    delta = 0x9e3779b9L
-    mask = 0xffffffffL
+    value0, value1 = struct.unpack(endian + "2L", block)
+    klist = struct.unpack(endian + "4L", key)
+    sumup = 0
+    delta = 0x9E3779B9
+    mask = 0xFFFFFFFF
     for round in range(n):
-        value0 = (value0 + (((value1<<4 ^ value1>>5) + value1) ^ (sumup + klist[sumup & 3]))) & mask
+        value0 = (
+            value0
+            + (((value1 << 4 ^ value1 >> 5) + value1) ^ (sumup + klist[sumup & 3]))
+        ) & mask
         sumup = (sumup + delta) & mask
-        value1 = (value1 + (((value0<<4 ^ value0>>5) + value0) ^ (sumup + klist[sumup>>11 & 3]))) & mask
-    return struct.pack(endian + "2L", value0, value1)
+        value1 = (
+            value1
+            + (
+                ((value0 << 4 ^ value0 >> 5) + value0)
+                ^ (sumup + klist[sumup >> 11 & 3])
+            )
+        ) & mask
+    return struct.pack(endian + "2", value0, value1)
+
 
 def xtea_decrypt(key, block, n=32, endian="!"):
     """
         Decrypt 64 bit data block using XTEA block cypher
-        * key = 128 bit (16 char) 
+        * key = 128 bit (16 char)
         * block = 64 bit (8 char)
         * n = rounds (default 32)
-        * endian = byte order (see 'struct' doc - default big/network) 
+        * endian = byte order (see 'struct' doc - default big/network)
 
         >>> z = 'b67c01662ff6964a'.decode('hex')
         >>> xtea_decrypt('0123456789012345',z)
         'ABCDEFGH'
 
-        Only need to change byte order if sending/receiving from 
-        alternative endian implementation 
+        Only need to change byte order if sending/receiving from
+        alternative endian implementation
 
         >>> z = 'ea0c3d7c1c22557f'.decode('hex')
         >>> xtea_decrypt('0123456789012345',z,endian="<")
         'ABCDEFGH'
 
     """
-    value0, value1 = struct.unpack(endian+"2L", block)
-    klist = struct.unpack(endian + "4L", key)
-    delta, mask = 0x9e3779b9L,0xffffffffL
+    value0, value1 = struct.unpack(endian + "2", block)
+    klist = struct.unpack(endian + "4", key)
+    delta, mask = 0x9E3779B9, 0xFFFFFFFF
     sum = (delta * n) & mask
     for round in range(n):
-        value1 = (value1 - (((value0<<4 ^ value0>>5) + value0) ^ (sum + klist[sum>>11 & 3]))) & mask
+        value1 = (
+            value1
+            - (((value0 << 4 ^ value0 >> 5) + value0) ^ (sum + klist[sum >> 11 & 3]))
+        ) & mask
         sum = (sum - delta) & mask
-        value0 = (value0 - (((value1<<4 ^ value1>>5) + value1) ^ (sum + klist[sum & 3]))) & mask
-    return struct.pack(endian+"2L", value0, value1)
+        value0 = (
+            value0 - (((value1 << 4 ^ value1 >> 5) + value1) ^ (sum + klist[sum & 3]))
+        ) & mask
+    return struct.pack(endian + "2", value0, value1)
+
 
 if __name__ == "__main__":
     import doctest
+
     doctest.testmod()
