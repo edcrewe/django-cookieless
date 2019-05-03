@@ -88,8 +88,8 @@ def xtea_encrypt(key, block, n=32, endian="!"):
         'ea0c3d7c1c22557f'
 
     """
-    value0, value1 = struct.unpack(endian + "2L", block)
-    klist = struct.unpack(endian + "4L", key)
+    value0, value1 = struct.unpack(endian + "2", block)
+    klist = struct.unpack(endian + "4", key)
     sumup = 0
     delta = 0x9E3779B9
     mask = 0xFFFFFFFF

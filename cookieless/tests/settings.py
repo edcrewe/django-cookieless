@@ -49,6 +49,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "cookieless.middleware.CookielessSessionMiddleware",
 ]
 
 ROOT_URLCONF = "cookieless.tests.urls"

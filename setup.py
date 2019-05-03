@@ -30,6 +30,7 @@ setup(
     install_requires=[
         "setuptools",
         # -*- Extra requirements: -*-
+        "cryptography",
     ],
     entry_points="""
       # -*- Entry points: -*-

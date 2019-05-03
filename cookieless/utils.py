@@ -4,8 +4,10 @@ import random
 
 from django.conf import settings
 from urllib import parse
-from cookieless.xteacrypt import crypt
+from cryptography.fernet import Fernet
 from cookieless.config import DEFAULT_SETTINGS
+
+CIPHER_KEY = Fernet.generate_key()
 
 
 class CryptSession(object):
@@ -14,7 +16,7 @@ class CryptSession(object):
     """
 
     def __init__(self):
-        self.secret = settings.SECRET_KEY[:16]
+        self.secret = CIPHER_KEY
         self.settings = getattr(settings, "COOKIELESS", DEFAULT_SETTINGS)
 
     def prepare_url(self, url):
@@ -33,7 +35,10 @@ class CryptSession(object):
             return ""
 
         secret = self._secret(request)
-        session_key = crypt(secret, sessionid).encode("base64")
+        cipher = Fernet(secret)
+        session_key = cipher.encrypt(bytes(sessionid, "utf8"))
+        return session_key
+
         nonce = self._random_string_generator(20)
         session_key = self.xor(nonce, session_key).encode("base64")
 
@@ -50,8 +55,8 @@ class CryptSession(object):
         if not sessionid:
             return ""
 
-        (nonce, sessionid) = sessionid.split(":", 1)
-        sessionid = self.xor(nonce, sessionid.decode("base64"))
+        # (nonce, sessionid) = sessionid.split(":", 1)
+        # sessionid = self.xor(nonce, sessionid.decode("base64"))
 
         secret = self._secret(request)
         if self.settings.get("HOSTS", []):
@@ -63,10 +68,10 @@ class CryptSession(object):
             if url.hostname not in self.settings["HOSTS"]:
                 err = "%s is unauthorised" % url.hostname
                 raise Exception(err)
-
-        session_key = crypt(secret, sessionid.decode("base64"))
+        cipher = Fernet(secret)
+        session_key = cipher.decrypt(sessionid)
         try:
-            return unicode(session_key)
+            return str(session_key, "utf8")
         except:
             return ""
 
@@ -83,6 +88,7 @@ class CryptSession(object):
         """
         secret = self.secret
         specific = ""
+        return secret
         if self.settings.get("URL_SPECIFIC", False):
             specific += request.META.get("SERVER_NAME", "")
             specific += request.META.get("PATH_INFO", "")
@@ -90,19 +96,14 @@ class CryptSession(object):
             specific += request.META.get("REMOTE_ADDR", "127.0.0.1")
             specific += request.META.get("HTTP_USER_AGENT", "unknown browser")
         if specific:
-            secret = crypt(secret, specific + self.secret)
-            new_secret = ""
-            # Grab ascii from the whole specific string
-            for i in range(0, len(secret), int(len(secret) / 16)):
-                try:
-                    new_secret += secret[i].encode("ascii")
-                except:
-                    new_secret += secret[i].encode("base64")[0]
-            secret = new_secret[:16]
+            cipher = Fernet(self.secret)
+            secret = cipher.encrypt(bytes(specific, "utf8") + self.secret)
+            # new_secret = secret.decode("ascii")
+            # secret = new_secret[:16]
         return secret
 
     def xor(self, s1, s2):
-        # if s1 and s2 are not the same length, pad the smaller one
+        """if s1 and s2 are not the same length, pad the smaller one"""
         if len(s2) < len(s1):
             (s1, s2) = (s2, s1)
         if len(s1) < len(s2):

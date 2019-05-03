@@ -19,7 +19,7 @@ from cookieless.config import LINKS_RE, DEFAULT_SETTINGS
 cookieless_signal = django.dispatch.Signal()
 
 
-class CookielessSessionMiddleware(object):
+class CookielessSessionMiddleware:
     """ Django snippets julio carlos and Ivscar
         http://djangosnippets.org/snippets/1540/
         Plus django.session.middleware combined
@@ -32,7 +32,7 @@ class CookielessSessionMiddleware(object):
         cookieless sessions get the no_cookies = True key added
     """
 
-    def __init__(self):
+    def __init__(self, get_response=None):
         """ Add regex for auto inserts and an instance of
             the standard django.contrib.sessions middleware
         """
@@ -42,7 +42,20 @@ class CookielessSessionMiddleware(object):
         self._re_body = re.compile("</body>", re.I)
         self._sesh = CryptSession()
         self.standard_session = SessionMiddleware()
-        self.engine = import_module(settings.SESSION_ENGINE)
+
+        self.get_response = get_response
+        engine = import_module(settings.SESSION_ENGINE)
+        self.SessionStore = engine.SessionStore
+
+    def __call__(self, request):
+        # Code to be executed for each request before
+        # the view (and later middleware) are called.
+        self.process_request(request)
+        response = self.get_response(request)
+        # Code to be executed for each request/response after
+        # the view is called.
+        response = self.process_response(request, response)
+        return response
 
     def process_request(self, request):
         """ Check if we have the session key from a cookie,
@@ -69,7 +82,7 @@ class CookielessSessionMiddleware(object):
             session_key = request.COOKIES.get(name, "")
 
         try:
-            request.session = self.engine.SessionStore(session_key)
+            request.session = self.SessionStore(session_key)
         except:
             pass
         # NB: engine may work but return empty key less session
@@ -80,7 +93,7 @@ class CookielessSessionMiddleware(object):
 
         # If the session_key isn't tied to a session - create a new one
         if not session_key:
-            request.session = self.engine.SessionStore()
+            request.session = self.SessionStore()
             if no_cookies:
                 request.session["no_cookies"] = True
                 # Flag it here so we can send created session signal
@@ -103,7 +116,7 @@ class CookielessSessionMiddleware(object):
                     # - may be attached to a user - so always start a new separate one
                     cookie_key = request.COOKIES.get(settings.SESSION_COOKIE_NAME, "")
                     if cookie_key == request.session.session_key:
-                        request.session = self.engine.SessionStore()
+                        request.session = self.SessionStore()
                         request.session["no_cookies"] = True
                         request.session["created_cookieless"] = True
                         request.session.save()
