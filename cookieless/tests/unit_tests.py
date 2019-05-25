@@ -7,6 +7,8 @@ from django.test.client import RequestFactory
 from cookieless.utils import CryptSession
 from cookieless.config import DEFAULT_SETTINGS
 
+from django.test.client import Client
+
 
 class CryptTestCase(unittest.TestCase):
     """
@@ -52,3 +54,9 @@ class CryptTestCase(unittest.TestCase):
         settings.COOKIELESS_HOSTS = ["localhost"]
         keys = self.crypt_ok(request)
         self.assertEqual(*keys)
+
+    def test_test_client(self):
+        """Cookieless can cause fail of test browser so check it"""
+        self.browser = Client()
+        self.browser.request()
+        self.assertTrue(self.browser)

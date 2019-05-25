@@ -17,23 +17,23 @@ This package is designed to cater for anonymous user session maintenance, withou
 WARNING : There are security issues with this, since it is not possible to use
 CSRF protection without session Cookies to maintain a separate token from that passed via the URL or form posts.
 
-However there are cases when forms are used on a public site, where setting cookies is not desirable (`due to privacy legislation <http://www.ico.gov.uk/>`_), since technically they are not required for anonymous users to respond to forms. 
+However there are cases when forms are used on a public site, where setting cookies is not desirable (`due to privacy legislation <http://www.ico.gov.uk/>`_), since technically they are not required for anonymous users to respond to forms.
 So if used, may necessitate requesting permission to set cookies, from the user.
 
 Hence this package was devised to allow django to deliver multipage forms, without using cookies.
 
-To ameliorate the security implications, a whitelist of allowed domains, can be set in the configuration. 
+To ameliorate the security implications, a whitelist of allowed domains, can be set in the configuration.
 
-Usage can also be restricted to a particular URL. 
+Usage can also be restricted to a particular URL.
 
 As another safety measure, handling of GET requests can be turned off, so that the encrypted session id is not present in any URLs.
 
-Please NOTE: It is not advisable to use this package without some form of the above restrictions being in place. 
+Please NOTE: It is not advisable to use this package without some form of the above restrictions being in place.
 
 For the purposes of using both cookie based and cookieless sessions together, there is a
 custom cookieless_signal(sender=request, created) and a 'no_cookies' flag when cookieless sessions are saved.
 
-Both cater for hooking up custom code for handling these less secure sessions. 
+Both cater for hooking up custom code for handling these less secure sessions.
 
 The package provides a decorator utility to turn off cookie setting for particular views (which also sets the csrf_exempt flag).
 
@@ -52,7 +52,7 @@ from cookieless.decorators import no_cookies
 Note that if a number of browser tabs are open on to a site with cookieless, they will each maintain a completely separate session, since
 without cookies the session is tied to the session posted from the pages accessed, not the client as a whole.
 
-In cases where this is not the desired behaviour, then it can be reduced by using URL rewriting to make any links to open other windows pass session across. 
+In cases where this is not the desired behaviour, then it can be reduced by using URL rewriting to make any links to open other windows pass session across.
 However of course this also means that potentially a session can be shared across browsers, too.
 
 Installation
@@ -62,7 +62,7 @@ To install add the package via pip or other build tool, e.g. bin/pip install dja
 
 Then replace the standard Session in the middleware settings:
 
->>> MIDDLEWARE_CLASSES = (
+>>> MIDDLEWARE = (
 ...    'django.middleware.gzip.GZipMiddleware',
 ...    'django.middleware.common.CommonMiddleware',
 ...    'django.middleware.transaction.TransactionMiddleware',
@@ -74,7 +74,7 @@ The following settings control its behaviour:
 
 (see the example settings file)
 
-1. Rewriting the response automatically rather than use manual <% session_token %> <% session_url %> 
+1. Rewriting the response automatically rather than use manual <% session_token %> <% session_url %>
 
 COOKIELESS['REWRITE'] = True
 
@@ -94,7 +94,7 @@ COOKIELESS['HOSTS'] = ['localhost', ]
 
 COOKIELESS['NO_COOKIE_PERSIST'] = True
 
-6. Further security option to only keep a session for accessing a specific URL 
+6. Further security option to only keep a session for accessing a specific URL
 
 COOKIELESS['URL_SPECIFIC'] = True
 
@@ -115,13 +115,13 @@ Then run via:
 
 bin/django-admin.py or manage.py test cookieless.tests --settings=cookieless.tests.settings
 
-(The package was changed from a namespace package due to the issue with pip 
+(The package was changed from a namespace package due to the issue with pip
 not installing the __init__ for running tests when it does a nspkg.pth file instead)
 
 cookieless/decorator.py
 -----------------------
 
-Because the django test browser has some session implementation specific mocking, 
+Because the django test browser has some session implementation specific mocking,
 it fails to work if used directly against cookieless, so to stop it breaking other tests
 cookieless checks to see if the django admin command has been called with the 'test' argument and sets settings.TESTING = True, and doesnt decorate with no_cookies if so.
 

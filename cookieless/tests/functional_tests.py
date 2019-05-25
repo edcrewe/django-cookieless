@@ -25,8 +25,8 @@ class FuncTestCase(BaseFuncTestCase):
         response = self.browser.get("/")
         url = "?%s=" % settings.SESSION_COOKIE_NAME
         # Check form session id is set
-        self.assertContains(response, self.hidden)
-        self.assertTrue(url in response.content)
+        self.assertTrue(self.hidden in str(response.content))
+        self.assertTrue(url in str(response.content))
 
     def test_session_in_rewritten_html(self):
         """ Confirm session is rewritten into html """
@@ -34,8 +34,8 @@ class FuncTestCase(BaseFuncTestCase):
         response = self.browser.get("/plain-view.html")
         url = "?%s=" % self.skey
         # Check form session id is set
-        self.assertContains(response, self.hidden)
-        self.assertTrue(url in response.content)
+        self.assertTrue(self.hidden in str(response.content))
+        self.assertTrue(url in str(response.content))
 
     def test_session_no_url_rewrite_option(self):
         """ Confirm session is rewritten into html """
@@ -44,15 +44,15 @@ class FuncTestCase(BaseFuncTestCase):
         response = self.browser.get("/plain-view.html")
         url = "?%s=" % settings.SESSION_COOKIE_NAME
         # Check form session id is set but urls aren't
-        self.assertContains(response, self.hidden)
-        self.assertTrue(url not in response.content)
+        self.assertTrue(self.hidden in str(response.content))
+        self.assertTrue(url not in str(response.content))
 
     def test_disabled_for_testing_flag(self):
         """ Confirm that normally test browser will not use cookieless """
         self.settings["REWRITE"] = True
         settings.TESTING = True
         response = self.browser.get("/plain-view.html")
-        self.assertTrue(self.hidden not in response.content)
+        self.assertTrue(self.hidden not in str(response.content))
         settings.TESTING = False
 
     def test_session_retained(self):
@@ -65,7 +65,7 @@ class FuncTestCase(BaseFuncTestCase):
         response = self.browser.get("/index.html")
         session, session_id = self.get_session(response)
         session_key = session.session_key
-        self.assertTrue("classview" in session.keys())
+        self.assertTrue("classview" in session.keys(), session.keys())
         self.assertFalse(session["created_cookieless"])
         # Post form to second page
         postdict = {self.skey: session_id}
@@ -164,7 +164,7 @@ class FuncTestCase(BaseFuncTestCase):
 
         search_str = r'"/\?' + settings.SESSION_COOKIE_NAME + '=(.*?)"'
 
-        m = re.search(search_str, response.content)
+        m = re.search(search_str, str(response.content))
         session_key = m.group(1)
         params = {settings.SESSION_COOKIE_NAME: session_key}
 

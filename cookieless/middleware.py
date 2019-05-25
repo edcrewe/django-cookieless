@@ -99,7 +99,15 @@ class CookielessSessionMiddleware:
                 # Flag it here so we can send created session signal
                 # with data later on in process_response
                 request.session["created_cookieless"] = True
-            request.session.save()
+            self.session_save(request.session)
+
+    def session_save(self, session):
+        """Ensure all keys are strings - required by move to JSON serializer with 1.6"""
+        for key in session.keys():
+            if type(key) not in (type(""), type(u""), type(True)):
+                session[str(key)] = str(session[key])
+                del session[key]
+        session.save()
 
     def process_response(self, request, response):
         """
@@ -119,7 +127,7 @@ class CookielessSessionMiddleware:
                         request.session = self.SessionStore()
                         request.session["no_cookies"] = True
                         request.session["created_cookieless"] = True
-                        request.session.save()
+                        self.session_save(request.session)
                 if self.settings.get("DELETE_COOKIES", False):
                     # Blat any existing cookies
                     for key in request.COOKIES.keys():
@@ -144,18 +152,7 @@ class CookielessSessionMiddleware:
                 pass
             else:
                 if modified or settings.SESSION_SAVE_EVERY_REQUEST:
-                    try:
-                        # Save the session data
-                        request.session.save()
-                    except:
-                        # Ensure all keys are strings - required by move to JSON serializer with 1.6
-                        for key in request.session.keys():
-                            if type(key) not in (type(""), type(u"")):
-                                request.session[str(key)] = str(request.session[key])
-                                del request.session[key]
-                            # elif type(value) not in (type(''), type(u''), type(True)):
-                            #    request.session[key] = str(request.session[key])
-                        request.session.save()
+                    self.session_save(request.session)
                     cookieless_signal.send(sender=request, created=created)
             return response
         else:
@@ -200,20 +197,24 @@ class CookielessSessionMiddleware:
 
             if self.settings.get("USE_GET", False):
                 try:
-                    response.content = self._re_links.sub(new_url, response.content)
+                    response.content = self._re_links.sub(
+                        new_url, str(response.content)
+                    )
                 except:
                     pass
 
             # Check in case response has already got a manual session_id inserted
             repl_form = '<input type="hidden" name="%s"' % name
-            if hasattr(response, "content") and response.content.find(repl_form) == -1:
+            if hasattr(response, "content") and repl_form not in str(response.content):
                 repl_form = """%s value="%s" />
                                </form>""" % (
                     repl_form,
                     session_key,
                 )
                 try:
-                    response.content = self._re_forms.sub(repl_form, response.content)
+                    response.content = self._re_forms.sub(
+                        repl_form, str(response.content)
+                    )
                 except:
                     pass
 

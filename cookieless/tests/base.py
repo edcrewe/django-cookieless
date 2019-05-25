@@ -34,11 +34,13 @@ class BaseFuncTestCase(TestCase):
         parts = ""
         if not response.content:
             print("RESPONSE FAILED: {}".format(response.__class__))
-        if response.content.find(self.hidden) > -1:
+        else:
+            content = str(response.content)
+        if self.hidden in content:
             splitter = self.hidden
         else:
             splitter = "%s=" % self.skey
-        parts = response.content.split(splitter, 1)
+        parts = content.split(splitter, 1)
         session_key = ""
         if len(parts) > 1:
             parts = parts[1].split('"', 1)

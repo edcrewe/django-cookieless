@@ -11,11 +11,11 @@
 
     <p><a href={% session_url "/function-view.html" %}>Function view</a></p>
     <form method="post" action="/function-view.html">{% csrf_token %}
-      {% session_token %}    
+      {% session_token %}
       <input type="text" name="test" value="test form" />
       <input type="submit" />
-    </form>  
+    </form>
     <hr>
-    {{ session_data }}  
+    {{ session_data }}
   </body>
 </html>

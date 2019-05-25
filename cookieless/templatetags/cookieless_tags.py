@@ -13,11 +13,12 @@ register = template.Library()
 
 
 class BaseSessionNode(template.Node):
-    def __init__(self,):
+    def __init__(self):
         self.request_var = template.Variable("request")
         self._sesh = CryptSession()
 
     def get_key(self, context):
+        return ""
         request = self.request_var.resolve(context)
         if request.session.session_key:
             return self._sesh.encrypt(request, request.session.session_key)
