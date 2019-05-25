@@ -35,7 +35,7 @@ class BaseFuncTestCase(TestCase):
         if not response.content:
             print("RESPONSE FAILED: {}".format(response.__class__))
         else:
-            content = str(response.content)
+            content = response.content.decode()
         if self.hidden in content:
             splitter = self.hidden
         else:

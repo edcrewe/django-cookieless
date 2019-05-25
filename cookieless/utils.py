@@ -37,15 +37,7 @@ class CryptSession(object):
         secret = self._secret(request)
         cipher = Fernet(secret)
         session_key = cipher.encrypt(bytes(sessionid, "utf8"))
-        return session_key
-
-        nonce = self._random_string_generator(20)
-        session_key = self.xor(nonce, session_key).encode("base64")
-
-        if session_key.endswith("\n"):
-            session_key = session_key[:-1]
-
-        return "%s:%s" % (nonce, session_key)
+        return session_key.decode()
 
     def decrypt(self, request, sessionid):
         """ Avoid showing plain sessionids
@@ -55,8 +47,7 @@ class CryptSession(object):
         if not sessionid:
             return ""
 
-        # (nonce, sessionid) = sessionid.split(":", 1)
-        # sessionid = self.xor(nonce, sessionid.decode("base64"))
+        sessionid = bytes(sessionid, "utf-8")
 
         secret = self._secret(request)
         if self.settings.get("HOSTS", []):

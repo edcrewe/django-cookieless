@@ -198,14 +198,17 @@ class CookielessSessionMiddleware:
             if self.settings.get("USE_GET", False):
                 try:
                     response.content = self._re_links.sub(
-                        new_url, str(response.content)
+                        new_url, response.content.decode()
                     )
                 except:
                     pass
 
             # Check in case response has already got a manual session_id inserted
             repl_form = '<input type="hidden" name="%s"' % name
-            if hasattr(response, "content") and repl_form not in str(response.content):
+            if (
+                hasattr(response, "content")
+                and repl_form not in response.content.decode()
+            ):
                 repl_form = """%s value="%s" />
                                </form>""" % (
                     repl_form,
@@ -213,11 +216,10 @@ class CookielessSessionMiddleware:
                 )
                 try:
                     response.content = self._re_forms.sub(
-                        repl_form, str(response.content)
+                        repl_form, response.content.decode()
                     )
                 except:
                     pass
-
             return response
         else:
             return response

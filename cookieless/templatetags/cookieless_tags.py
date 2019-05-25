@@ -18,7 +18,6 @@ class BaseSessionNode(template.Node):
         self._sesh = CryptSession()
 
     def get_key(self, context):
-        return ""
         request = self.request_var.resolve(context)
         if request.session.session_key:
             return self._sesh.encrypt(request, request.session.session_key)
