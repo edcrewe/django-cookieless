@@ -65,7 +65,7 @@ class FuncTestCase(BaseFuncTestCase):
         response = self.browser.get("/index.html")
         session, session_id = self.get_session(response)
         session_key = session.session_key
-        self.assertTrue("classview" in session.keys(), session.keys())
+        self.assertTrue("classview" in session.keys())
         self.assertFalse(session["created_cookieless"])
         # Post form to second page
         postdict = {self.skey: session_id}

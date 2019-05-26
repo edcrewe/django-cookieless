@@ -4,6 +4,7 @@ from django.conf.urls import *
 # set of URL patterns are used when running unit tests. This test_urls
 # module should be referred to by your test class.
 
-urlpatterns = patterns('django-cookieless.views',
-  # Add url patterns here
+urlpatterns = patterns(
+    "django-cookieless.views",
+    # Add url patterns here
 )

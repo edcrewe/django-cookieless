@@ -1,7 +1,7 @@
 Django Cookieless
 =================
 
-Ed Crewe - Feb 2014
+Ed Crewe - May 2019
 
 Overview
 --------

@@ -5,7 +5,7 @@ from django.test.client import Client
 from django.test.client import RequestFactory
 from django.test import TestCase
 
-from cookieless.utils import CryptSession
+from cookieless.cryptsession import CryptSession
 from cookieless.config import DEFAULT_SETTINGS
 
 

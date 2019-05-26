@@ -9,7 +9,7 @@ from django.http import HttpResponseRedirect
 from django.contrib.sessions.middleware import SessionMiddleware
 
 # Obscure the session id when passing it around in HTML
-from cookieless.utils import CryptSession
+from cookieless.cryptsession import CryptSession
 from cookieless.config import LINKS_RE, DEFAULT_SETTINGS
 
 # Add a signal as a hook for the creation or saving of cookieless sessions

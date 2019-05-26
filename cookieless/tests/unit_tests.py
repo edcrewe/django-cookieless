@@ -4,7 +4,7 @@ from importlib import import_module
 from django.conf import settings
 from django.test.client import RequestFactory
 
-from cookieless.utils import CryptSession
+from cookieless.cryptsession import CryptSession
 from cookieless.config import DEFAULT_SETTINGS
 
 from django.test.client import Client

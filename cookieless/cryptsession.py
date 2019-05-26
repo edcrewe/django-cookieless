@@ -1,6 +1,7 @@
 """ Obscure the session id when passing it around in HTML """
 import string
-import random
+import base64
+import hashlib
 
 from django.conf import settings
 from urllib import parse
@@ -16,8 +17,8 @@ class CryptSession(object):
     """
 
     def __init__(self):
-        self.secret = CIPHER_KEY
         self.settings = getattr(settings, "COOKIELESS", DEFAULT_SETTINGS)
+        self.cipher = Fernet(CIPHER_KEY)
 
     def prepare_url(self, url):
         patt = None
@@ -34,10 +35,9 @@ class CryptSession(object):
         if not sessionid:
             return ""
 
-        secret = self._secret(request)
-        cipher = Fernet(secret)
-        session_key = cipher.encrypt(bytes(sessionid, "utf8"))
-        return session_key.decode()
+        hashit = self.check_specific(request)
+        session_key = self.cipher.encrypt(bytes(sessionid, "utf8"))
+        return hashit + session_key.decode()
 
     def decrypt(self, request, sessionid):
         """ Avoid showing plain sessionids
@@ -48,8 +48,10 @@ class CryptSession(object):
             return ""
 
         sessionid = bytes(sessionid, "utf-8")
-
-        secret = self._secret(request)
+        hashit = self.check_specific(request)
+        if hashit and not sessionid.decode().startswith(hashit):
+            return ""
+        sessionid = sessionid[len(hashit) :]
         if self.settings.get("HOSTS", []):
             referer = request.META.get("HTTP_REFERER", "None")
             if referer == "None":
@@ -59,10 +61,10 @@ class CryptSession(object):
             if url.hostname not in self.settings["HOSTS"]:
                 err = "%s is unauthorised" % url.hostname
                 raise Exception(err)
-        cipher = Fernet(secret)
+        cipher = Fernet(CIPHER_KEY)
         session_key = cipher.decrypt(sessionid)
         try:
-            return str(session_key, "utf8")
+            return session_key.decode()
         except:
             return ""
 
@@ -73,13 +75,11 @@ class CryptSession(object):
             self.encrypt(request, request.session.session_key),
         )
 
-    def _secret(self, request):
+    def check_specific(self, request):
         """ optionally make secret client or url dependent
-            NB: Needs to be at least 16 characters so add secret to META data
+            NB: Needs to be 32 characters base64 encoded to be Fernet secret
         """
-        secret = self.secret
         specific = ""
-        return secret
         if self.settings.get("URL_SPECIFIC", False):
             specific += request.META.get("SERVER_NAME", "")
             specific += request.META.get("PATH_INFO", "")
@@ -87,21 +87,5 @@ class CryptSession(object):
             specific += request.META.get("REMOTE_ADDR", "127.0.0.1")
             specific += request.META.get("HTTP_USER_AGENT", "unknown browser")
         if specific:
-            cipher = Fernet(self.secret)
-            secret = cipher.encrypt(bytes(specific, "utf8") + self.secret)
-            # new_secret = secret.decode("ascii")
-            # secret = new_secret[:16]
-        return secret
-
-    def xor(self, s1, s2):
-        """if s1 and s2 are not the same length, pad the smaller one"""
-        if len(s2) < len(s1):
-            (s1, s2) = (s2, s1)
-        if len(s1) < len(s2):
-            s1 = s1 * ((len(s2) / len(s1)) + 1)
-        return "".join(chr(ord(a) ^ ord(b)) for a, b in zip(s1, s2))
-
-    def _random_string_generator(self, length):
-        return "".join(
-            random.choice(string.ascii_letters + string.digits) for x in range(length)
-        )
+            return hashlib.md5(specific.encode()).hexdigest()
+        return ""

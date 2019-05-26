@@ -4,7 +4,8 @@ Changelog
 1.1 - 1st May 2019
 ------------------
 
-- Fix for Python 3 and Django 2.2
+- Rewrite for Python 3 and Django 2.2
+- Remove xteacrypt and use cryptography
 
 1.0 - 24th February 2014
 ------------------------

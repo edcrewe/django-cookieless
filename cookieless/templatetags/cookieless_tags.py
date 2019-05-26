@@ -7,7 +7,7 @@ from django.template.defaultfilters import stringfilter, striptags
 from django.utils.safestring import mark_safe
 from django.utils.html import escape
 
-from cookieless.utils import CryptSession
+from cookieless.cryptsession import CryptSession
 
 register = template.Library()
 
