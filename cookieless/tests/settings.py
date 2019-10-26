@@ -57,7 +57,7 @@ ROOT_URLCONF = "cookieless.tests.urls"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [BASE_DIR+"/tests/templates"],
+        "DIRS": [BASE_DIR + "/tests/templates"],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
