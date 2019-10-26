@@ -1,11 +1,20 @@
+
 Changelog
 =========
+
+1.2 - 26th Oct 2019
+-------------------
+- Fix breach mitigation test for Python 3 [Ed Crewe] 
+- Fix test settings to correct path  [jonespm]
+- Fix content-length and decode  [C.Severance]
 
 1.1 - 1st May 2019
 ------------------
 
 - Rewrite for Python 3 and Django 2.2
 - Remove xteacrypt and use cryptography
+
+[Ed Crewe]
 
 1.0 - 24th February 2014
 ------------------------

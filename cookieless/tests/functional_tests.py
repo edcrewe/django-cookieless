@@ -182,3 +182,15 @@ class FuncTestCase(BaseFuncTestCase):
         gzfile.write(string)
         gzfile.close()
         return contents.getvalue()
+
+    def test_content_length(self):
+        """Check that content length is set correctly"""
+        self.settings["REWRITE"] = True
+        self.settings["USE_GET"] = True
+        response = self.browser.get("/plain-view.html")
+        url = "?%s=" % self.skey
+        # Check content is encoded
+        self.assertEqual(type(response.content), bytes)
+        self.assertTrue(url in response.content.decode())
+        # Check length is set correctly
+        self.assertEqual(len(response.content.decode()), int(response["Content-Length"]))
