@@ -44,10 +44,10 @@ Usually this is easiest done in the urls.py of your core application ...
 
 from cookieless.decorators import no_cookies
 
->>> urlpatterns = patterns('',
-...    url(r'^view_function/(\d{1,6})$', no_cookies(view_function)),
-...    url(r'^view_class/(\d{1,6})$', no_cookies(ViewClass.as_view())),
-...)
+>>> urlpatterns = [
+...    path('somewhere/index', no_cookies(views.home)),
+...    re_path(r'^somewhere/page/(\d{1,6})$', no_cookies(views.page)),
+...]
 
 Note that if a number of browser tabs are open on to a site with cookieless, they will each maintain a completely separate session, since
 without cookies the session is tied to the session posted from the pages accessed, not the client as a whole.
