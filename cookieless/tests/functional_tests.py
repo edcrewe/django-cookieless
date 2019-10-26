@@ -2,7 +2,7 @@ import re
 import unittest
 
 from gzip import GzipFile
-from io import StringIO
+from io import BytesIO
 
 from django.conf import settings
 
@@ -156,7 +156,6 @@ class FuncTestCase(BaseFuncTestCase):
         """
         Check that compression of repeated requests leads to differing string lengths
         """
-        return
         self.settings["REWRITE"] = True
         self.settings["USE_GET"] = True
         url = "/plain-view.html"
@@ -178,7 +177,7 @@ class FuncTestCase(BaseFuncTestCase):
         )
 
     def _compress(self, string):
-        contents = StringIO()
+        contents = BytesIO()
         gzfile = GzipFile(fileobj=contents, mode="wb")
         gzfile.write(string)
         gzfile.close()
