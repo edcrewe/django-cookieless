@@ -199,7 +199,7 @@ class CookielessSessionMiddleware:
                 try:
                     response.content = self._re_links.sub(
                         new_url, response.content.decode()
-                    )
+                    ).encode()
                 except:
                     pass
 
@@ -217,9 +217,11 @@ class CookielessSessionMiddleware:
                 try:
                     response.content = self._re_forms.sub(
                         repl_form, response.content.decode()
-                    )
+                    ).encode()
                 except:
                     pass
+            response['Content-Length'] = len(response.content);
             return response
         else:
+            response['Content-Length'] = len(response.content);
             return response
