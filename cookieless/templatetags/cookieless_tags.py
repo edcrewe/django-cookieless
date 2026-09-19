@@ -63,8 +63,11 @@ def session_filter(parser, token):
         taglist = token.split_contents()  # Not really useful
     except ValueError:
         raise template.TemplateSyntaxError("%r error" % token.contents.split()[0])
-    if len(taglist) > 1:
-        url = taglist[1]
+    if len(taglist) <= 1:
+        raise template.TemplateSyntaxError(
+            "%r requires a URL argument" % token.contents.split()[0]
+        )
+    url = taglist[1]
     return URLSessionNode(url)
 
 

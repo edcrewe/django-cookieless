@@ -194,3 +194,55 @@ class FuncTestCase(BaseFuncTestCase):
         self.assertTrue(url in response.content.decode())
         # Check length is set correctly
         self.assertEqual(len(response.content.decode()), int(response["Content-Length"]))
+
+    def test_redirect_rewrite_same_host(self):
+        """Rewrite same-host redirects to carry the encrypted session token."""
+        self.settings["REWRITE"] = True
+        self.settings["USE_GET"] = True
+        self.settings["URL_SPECIFIC"] = False
+        self.settings["CLIENT_ID"] = False
+        response = self.browser.get("/redirect-same-host.html", SERVER_NAME="localhost")
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue("http://localhost/index.html?" in response["Location"])
+        self.assertTrue(f"{self.skey}=" in response["Location"])
+
+    def test_redirect_not_rewritten_other_host(self):
+        """Do not rewrite redirects to a different host."""
+        self.settings["REWRITE"] = True
+        self.settings["USE_GET"] = True
+        response = self.browser.get("/redirect-other-host.html", SERVER_NAME="localhost")
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response["Location"], "http://example.org/index.html")
+
+    def test_standard_session_cookie_set_for_undecorated_view(self):
+        """Undecorated views should still use standard cookie sessions."""
+        response = self.browser.get("/cookie-view.html", SERVER_NAME="localhost")
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(self.skey in response.cookies)
+        self.assertTrue(self.skey in self.browser.cookies)
+
+    def test_no_cookie_persist_rotates_cookie_backed_session(self):
+        """No-cookie views should rotate away from cookie-backed sessions."""
+        self.settings["REWRITE"] = True
+        self.settings["USE_GET"] = True
+        self.settings["NO_COOKIE_PERSIST"] = True
+        self.settings["URL_SPECIFIC"] = False
+        self.settings["CLIENT_ID"] = False
+        self.settings["HOSTS"] = []
+
+        self.browser.get("/cookie-view.html", SERVER_NAME="localhost")
+        cookie_key = self.browser.cookies[self.skey].value
+        token = self.crypt_sesh.encrypt(self.factory.get("/plain-view.html"), cookie_key)
+
+        response = self.browser.post(
+            "/plain-view.html",
+            {self.skey: token},
+            SERVER_NAME="localhost",
+            HTTP_COOKIE=f"{self.skey}={cookie_key}",
+        )
+        session, _session_id = self.get_session(response, "/plain-view.html")
+        old_session = self.engine.SessionStore(cookie_key)
+
+        self.assertNotEqual(session.session_key, cookie_key)
+        self.assertTrue(session.get("no_cookies", False))
+        self.assertEqual(old_session.get("cookieview", ""), "my_cookie_view")

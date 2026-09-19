@@ -2,6 +2,7 @@
 
 from django.views.generic import TemplateView
 from django.http import HttpResponse
+from django.http import HttpResponseRedirect
 import datetime
 from django.utils.html import mark_safe
 from cookieless.cryptsession import CryptSession
@@ -33,6 +34,22 @@ def my_plain_view(request):
     html += '<form action="post"><input type="submit"></form>'
     html += "</body></html>"
     return HttpResponse(html)
+
+
+def my_cookie_view(request):
+    """Undecorated view to exercise standard session middleware behaviour."""
+    request.session["cookieview"] = "my_cookie_view"
+    return HttpResponse("<html><body><h1>Cookie view</h1></body></html>")
+
+
+def my_redirect_same_host_view(request):
+    """Redirect to same host for cookieless URL rewrite checks."""
+    return HttpResponseRedirect("http://localhost/index.html")
+
+
+def my_redirect_other_host_view(request):
+    """Redirect to other host to ensure cookieless does not rewrite it."""
+    return HttpResponseRedirect("http://example.org/index.html")
 
 
 class MyClassView(TemplateView):
