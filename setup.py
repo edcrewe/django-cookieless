@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 import os
 
-version = "1.2"
+version = "1.4"
 
 with open("README.md", encoding="utf-8") as readme_handle:
     README = readme_handle.read()

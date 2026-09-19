@@ -102,6 +102,10 @@ The following settings control behaviour, see the example settings file.
 2. Rewrite URLs to add a session ID for `no_cookies` decorated views. If this
    is false then all page navigation must be via form posts.
 
+   Rewriting applies only to in-app `http` and `https` links. External hosts,
+   hash-only links, `javascript:` links, and non-http schemes such as
+   `mailto:` and `tel:` are not rewritten.
+
    ```python
    COOKIELESS["USE_GET"] = True
    ```

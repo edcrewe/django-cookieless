@@ -294,7 +294,12 @@ class FuncTestCase(BaseFuncTestCase):
         self.settings["URL_SPECIFIC"] = False
         self.settings["CLIENT_ID"] = False
 
-        response = self.browser.get("/link-view.html", SERVER_NAME="localhost")
+        response = self.browser.get(
+            "/link-view.html",
+            SERVER_NAME="localhost",
+            SERVER_PORT="8000",
+            HTTP_HOST="localhost:8000",
+        )
         body = response.content.decode()
 
         self.assertTrue(
@@ -319,9 +324,26 @@ class FuncTestCase(BaseFuncTestCase):
                 body,
             )
         )
+        self.assertTrue(
+            re.search(
+                r'href="https://localhost:8000/port-match\?%s=[^"#]+"' % self.skey,
+                body,
+            )
+        )
+        self.assertTrue(
+            re.search(
+                r'href="//localhost:8000/proto-port-match\?%s=[^"#]+"' % self.skey,
+                body,
+            )
+        )
         self.assertTrue('href="https://www.dr-chuck.com/"' in body)
         self.assertTrue('href="//www.dr-chuck.com/example"' in body)
+        self.assertTrue('href="https://localhost:9000/port-miss"' in body)
+        self.assertTrue('href="//localhost:9000/proto-port-miss"' in body)
         self.assertTrue('href="#page-anchor"' in body)
         self.assertTrue('href="javascript:void(0)"' in body)
+        self.assertTrue('href="JaVaScRiPt:alert(1)"' in body)
+        self.assertTrue('href="mailto:test@example.org"' in body)
+        self.assertTrue('href="tel:+447518031909"' in body)
         self.assertTrue('data-href="/not-a-link"' in body)
         self.assertTrue('<span href="/not-rewritten">' in body)
