@@ -1,5 +1,4 @@
 """ Obscure the session id when passing it around in HTML """
-import string
 import base64
 import hashlib
 
@@ -8,7 +7,37 @@ from urllib import parse
 from cryptography.fernet import Fernet
 from cookieless.config import DEFAULT_SETTINGS
 
-CIPHER_KEY = Fernet.generate_key()
+
+def _as_bytes(value):
+    if isinstance(value, bytes):
+        return value
+    return str(value).encode("utf-8")
+
+
+def _derived_fernet_key(secret_material):
+    digest = hashlib.sha256(_as_bytes(secret_material)).digest()
+    return base64.urlsafe_b64encode(digest)
+
+
+def get_cipher_key(cookieless_settings=None):
+    """Return a stable fernet key from settings.
+
+    - If COOKIELESS['CIPHER_KEY'] is a valid fernet key, use it directly.
+    - If COOKIELESS['CIPHER_KEY'] is set but not fernet-formatted, derive one.
+    - Otherwise derive a key from Django SECRET_KEY.
+    """
+    current_settings = cookieless_settings or getattr(settings, "COOKIELESS", {})
+    configured_key = current_settings.get("CIPHER_KEY")
+
+    if configured_key:
+        key_bytes = _as_bytes(configured_key)
+        try:
+            Fernet(key_bytes)
+            return key_bytes
+        except (TypeError, ValueError):
+            return _derived_fernet_key(key_bytes)
+
+    return _derived_fernet_key(settings.SECRET_KEY)
 
 
 class CryptSession:
@@ -18,7 +47,8 @@ class CryptSession:
 
     def __init__(self):
         self.settings = getattr(settings, "COOKIELESS", DEFAULT_SETTINGS)
-        self.cipher = Fernet(CIPHER_KEY)
+        self.cipher_key = get_cipher_key(self.settings)
+        self.cipher = Fernet(self.cipher_key)
 
     def prepare_url(self, url):
         patt = None
@@ -61,8 +91,7 @@ class CryptSession:
             if url.hostname not in self.settings["HOSTS"]:
                 err = "%s is unauthorised" % url.hostname
                 raise Exception(err)
-        cipher = Fernet(CIPHER_KEY)
-        session_key = cipher.decrypt(sessionid)
+        session_key = self.cipher.decrypt(sessionid)
         try:
             return session_key.decode()
         except UnicodeDecodeError:

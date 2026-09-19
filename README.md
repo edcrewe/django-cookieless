@@ -1,6 +1,6 @@
 # Django Cookieless
 
-Ed Crewe - Oct 2019
+Ed Crewe - Sept 2026
 
 ## Overview
 
@@ -102,6 +102,10 @@ The following settings control behaviour, see the example settings file.
 2. Rewrite URLs to add a session ID for `no_cookies` decorated views. If this
    is false then all page navigation must be via form posts.
 
+   Rewriting applies only to in-app `http` and `https` links. External hosts,
+   hash-only links, `javascript:` links, and non-http schemes such as
+   `mailto:` and `tel:` are not rewritten.
+
    ```python
    COOKIELESS["USE_GET"] = True
    ```
@@ -147,6 +151,13 @@ The following settings control behaviour, see the example settings file.
    COOKIELESS["DELETE_COOKIES"] = False
    ```
 
+8. Optional, set an explicit shared cipher key for session token encryption.
+   If omitted, cookieless derives a stable key from Django `SECRET_KEY`.
+
+   ```python
+   COOKIELESS["CIPHER_KEY"] = "shared secret or a fernet key"
+   ```
+
 ## Tests
 
 The test suite sets up a simple application to test cookies manually, and to
@@ -163,6 +174,9 @@ Then run via:
 ```bash
 python -m django test cookieless.tests --settings=cookieless.tests.settings
 ```
+
+Tested on Django 6.1 and 5.2 with Python 3.14, and in CI on Python
+3.13/Django 6.1 and Python 3.12/Django 5.2.
 
 The package was changed from a namespace package due to the issue with pip not
 installing `__init__` for running tests when it does an `nspkg.pth` file
