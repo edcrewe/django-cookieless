@@ -1,13 +1,16 @@
+import base64
+import hashlib
 import unittest
 from importlib import import_module
 
+from cryptography.fernet import Fernet
 from django.conf import settings
 from django.test.client import RequestFactory
 from django.template import Context, Template, TemplateSyntaxError
 from django.test import SimpleTestCase
 
 from cookieless import cookieless_contains_class
-from cookieless.cryptsession import CryptSession
+from cookieless.cryptsession import CryptSession, get_cipher_key
 from cookieless.config import DEFAULT_SETTINGS
 
 from django.test.client import Client
@@ -23,9 +26,17 @@ class CryptTestCase(unittest.TestCase):
     def setUp(self):
         """ Get a session and a crypt_session """
         self.settings = getattr(settings, "COOKIELESS", DEFAULT_SETTINGS)
+        self._had_cipher_key = "CIPHER_KEY" in self.settings
+        self._original_cipher_key = self.settings.get("CIPHER_KEY")
         self.engine = import_module(settings.SESSION_ENGINE)
         self.crypt_sesh = CryptSession()
         self.factory = RequestFactory()
+
+    def tearDown(self):
+        if self._had_cipher_key:
+            self.settings["CIPHER_KEY"] = self._original_cipher_key
+        else:
+            self.settings.pop("CIPHER_KEY", None)
 
     def crypt_ok(self, request=None):
         """ Check encryption works with various settings """
@@ -83,6 +94,24 @@ class CryptTestCase(unittest.TestCase):
         bad_request = self.factory.get("/", HTTP_REFERER="http://example.org/foobar")
         with self.assertRaises(Exception):
             self.crypt_sesh.decrypt(bad_request, sessionid)
+
+    def test_default_cipher_key_derived_from_secret_key(self):
+        self.settings.pop("CIPHER_KEY", None)
+        expected = base64.urlsafe_b64encode(
+            hashlib.sha256(settings.SECRET_KEY.encode("utf-8")).digest()
+        )
+        self.assertEqual(get_cipher_key(self.settings), expected)
+        self.assertEqual(CryptSession().cipher_key, expected)
+
+    def test_explicit_fernet_key_used_verbatim(self):
+        key = Fernet.generate_key().decode("utf-8")
+        self.settings["CIPHER_KEY"] = key
+        self.assertEqual(get_cipher_key(self.settings), key.encode("utf-8"))
+
+    def test_non_fernet_cipher_key_is_derived(self):
+        self.settings["CIPHER_KEY"] = "shared-passphrase"
+        expected = base64.urlsafe_b64encode(hashlib.sha256(b"shared-passphrase").digest())
+        self.assertEqual(get_cipher_key(self.settings), expected)
 
 
 class TemplateTagTestCase(SimpleTestCase):

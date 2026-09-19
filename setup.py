@@ -3,13 +3,17 @@ import os
 
 version = "1.2"
 
+with open("README.md", encoding="utf-8") as readme_handle:
+    README = readme_handle.read()
+
+with open(os.path.join("docs", "HISTORY.md"), encoding="utf-8") as history_handle:
+    HISTORY = history_handle.read()
+
 setup(
     name="django-cookieless",
     version=version,
     description="Django cookie free sessions optional decorator",
-    long_description=open("README.md").read()
-    + "\n"
-    + open(os.path.join("docs", "HISTORY.txt")).read(),
+    long_description=README + "\n\n" + HISTORY,
     long_description_content_type="text/markdown",
     # Get more strings from http://www.python.org/pypi?%3Aaction=list_classifiers
     classifiers=[
