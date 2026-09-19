@@ -19,7 +19,7 @@ that passed via the URL or form posts.
 
 However there are cases when forms are used on a public site where setting
 cookies is not desirable, for example due to
-[privacy legislation](http://www.ico.gov.uk/), since technically they are not
+[privacy legislation](https://ico.org.uk/for-the-public/online/cookies/), since technically they are not
 required for anonymous users to respond to forms. So if used, this may
 necessitate requesting permission to set cookies from the user.
 
