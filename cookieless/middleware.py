@@ -1,6 +1,7 @@
 # -*- coding:utf-8 -*-
 import re
 from importlib import import_module
+from urllib import parse
 
 import django.dispatch
 from django.urls import resolve
@@ -186,6 +187,11 @@ class CookielessSessionMiddleware:
                 anchor_value = ""
                 if match.groupdict().get("anchor"):
                     anchor_value = match.groupdict().get("anchor")
+
+                href_value = match.groupdict()["in_href"] + anchor_value
+                if not self._should_rewrite_url(request, href_value):
+                    return match.group(0)
+
                 return_str = '<a%shref="%s%s=%s%s"%s>' % (
                     match.groupdict()["pre_href"],
                     self._sesh.prepare_url(match.groupdict()["in_href"]),
@@ -222,3 +228,39 @@ class CookielessSessionMiddleware:
         else:
             response["Content-Length"] = len(response.content)
             return response
+
+    def _is_same_host(self, request, target_netloc):
+        request_host = request.META.get("HTTP_HOST", "localhost")
+        request_parts = parse.urlsplit("//%s" % request_host)
+        target_parts = parse.urlsplit("//%s" % target_netloc)
+
+        request_name = request_parts.hostname or ""
+        target_name = target_parts.hostname or ""
+        if request_name.lower() != target_name.lower():
+            return False
+
+        if target_parts.port and request_parts.port and target_parts.port != request_parts.port:
+            return False
+        if target_parts.port and not request_parts.port:
+            return False
+
+        return True
+
+    def _should_rewrite_url(self, request, href):
+        candidate = (href or "").strip()
+        lower_candidate = candidate.lower()
+
+        if not candidate:
+            return False
+        if lower_candidate.startswith("#"):
+            return False
+        if lower_candidate.startswith("javascript:"):
+            return False
+
+        parsed_href = parse.urlsplit(candidate)
+        if parsed_href.scheme and parsed_href.scheme not in ("http", "https"):
+            return False
+        if parsed_href.netloc:
+            return self._is_same_host(request, parsed_href.netloc)
+
+        return True

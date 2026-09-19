@@ -307,5 +307,21 @@ class FuncTestCase(BaseFuncTestCase):
                 body,
             )
         )
+        self.assertTrue(
+            re.search(
+                r'href="https://localhost/index.html\?%s=[^"#]+"' % self.skey,
+                body,
+            )
+        )
+        self.assertTrue(
+            re.search(
+                r'href="//localhost/function-view.html\?%s=[^"#]+"' % self.skey,
+                body,
+            )
+        )
+        self.assertTrue('href="https://www.dr-chuck.com/"' in body)
+        self.assertTrue('href="//www.dr-chuck.com/example"' in body)
+        self.assertTrue('href="#page-anchor"' in body)
+        self.assertTrue('href="javascript:void(0)"' in body)
         self.assertTrue('data-href="/not-a-link"' in body)
         self.assertTrue('<span href="/not-rewritten">' in body)
