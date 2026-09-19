@@ -41,7 +41,7 @@ class CookielessSessionMiddleware:
         self._re_forms = re.compile("</form>", re.I)
         self._re_body = re.compile("</body>", re.I)
         self._sesh = CryptSession()
-        self.standard_session = SessionMiddleware()
+        self.standard_session = SessionMiddleware(lambda req: None)
 
         self.get_response = get_response
         engine = import_module(settings.SESSION_ENGINE)
@@ -83,12 +83,12 @@ class CookielessSessionMiddleware:
 
         try:
             request.session = self.SessionStore(session_key)
-        except:
+        except Exception:
             pass
         # NB: engine may work but return empty key less session
         try:
             session_key = request.session.session_key
-        except:
+        except Exception:
             session_key = ""
 
         # If the session_key isn't tied to a session - create a new one
@@ -103,8 +103,8 @@ class CookielessSessionMiddleware:
 
     def session_save(self, session):
         """Ensure all keys are strings - required by move to JSON serializer with 1.6"""
-        for key in session.keys():
-            if type(key) not in (type(""), type(u""), type(True)):
+        for key in list(session.keys()):
+            if not isinstance(key, str):
                 session[str(key)] = str(session[key])
                 del session[key]
         session.save()
@@ -128,14 +128,15 @@ class CookielessSessionMiddleware:
                         request.session["no_cookies"] = True
                         request.session["created_cookieless"] = True
                         self.session_save(request.session)
-                if self.settings.get("DELETE_COOKIES", False):
-                    # Blat any existing cookies
-                    for key in request.COOKIES.keys():
-                        response.delete_cookie(key)
 
             # Dont set any new cookies
             if hasattr(response, "cookies"):
                 response.cookies.clear()
+
+            if request.COOKIES and self.settings.get("DELETE_COOKIES", False):
+                # Explicitly expire incoming cookies for this response.
+                for key in request.COOKIES.keys():
+                    response.delete_cookie(key)
 
             # cookieless - do same as standard process response
             #              but dont set the cookie
@@ -195,33 +196,29 @@ class CookielessSessionMiddleware:
                 )
                 return return_str
 
-            if self.settings.get("USE_GET", False):
+            decoded_content = None
+            if hasattr(response, "content"):
                 try:
-                    response.content = self._re_links.sub(
-                        new_url, response.content.decode()
-                    ).encode()
-                except:
-                    pass
+                    decoded_content = response.content.decode()
+                except UnicodeDecodeError:
+                    decoded_content = None
+
+            if self.settings.get("USE_GET", False) and decoded_content is not None:
+                decoded_content = self._re_links.sub(new_url, decoded_content)
+                response.content = decoded_content.encode()
 
             # Check in case response has already got a manual session_id inserted
             repl_form = '<input type="hidden" name="%s"' % name
-            if (
-                hasattr(response, "content")
-                and repl_form not in response.content.decode()
-            ):
+            if decoded_content is not None and repl_form not in decoded_content:
                 repl_form = """%s value="%s" />
                                </form>""" % (
                     repl_form,
                     session_key,
                 )
-                try:
-                    response.content = self._re_forms.sub(
-                        repl_form, response.content.decode()
-                    ).encode()
-                except:
-                    pass
-            response['Content-Length'] = len(response.content);
+                decoded_content = self._re_forms.sub(repl_form, decoded_content)
+                response.content = decoded_content.encode()
+            response["Content-Length"] = len(response.content)
             return response
         else:
-            response['Content-Length'] = len(response.content);
+            response["Content-Length"] = len(response.content)
             return response

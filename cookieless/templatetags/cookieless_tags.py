@@ -44,7 +44,7 @@ register.tag("session_token", session_form)
 
 class URLSessionNode(BaseSessionNode):
     def __init__(self, url):
-        super(URLSessionNode, self).__init__()
+        super().__init__()
         self.url = self._sesh.prepare_url(url.replace('"', ""))
 
     def render(self, context):
@@ -63,8 +63,11 @@ def session_filter(parser, token):
         taglist = token.split_contents()  # Not really useful
     except ValueError:
         raise template.TemplateSyntaxError("%r error" % token.contents.split()[0])
-    if len(taglist) > 1:
-        url = taglist[1]
+    if len(taglist) <= 1:
+        raise template.TemplateSyntaxError(
+            "%r requires a URL argument" % token.contents.split()[0]
+        )
+    url = taglist[1]
     return URLSessionNode(url)
 
 

@@ -1,4 +1,4 @@
-include README.txt
+include README.md
 recursive-include cookieless *
 recursive-include docs *
 global-exclude *pyc

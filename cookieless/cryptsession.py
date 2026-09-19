@@ -11,7 +11,7 @@ from cookieless.config import DEFAULT_SETTINGS
 CIPHER_KEY = Fernet.generate_key()
 
 
-class CryptSession(object):
+class CryptSession:
     """ Tool to generate encrypted session id for
         middleware or templatetags
     """
@@ -57,7 +57,7 @@ class CryptSession(object):
             if referer == "None":
                 # End session unless a referer is passed
                 return ""
-            url = parse(referer)
+            url = parse.urlparse(referer)
             if url.hostname not in self.settings["HOSTS"]:
                 err = "%s is unauthorised" % url.hostname
                 raise Exception(err)
@@ -65,7 +65,7 @@ class CryptSession(object):
         session_key = cipher.decrypt(sessionid)
         try:
             return session_key.decode()
-        except:
+        except UnicodeDecodeError:
             return ""
 
     def key_tuple(self, request):

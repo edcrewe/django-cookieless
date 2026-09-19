@@ -11,11 +11,11 @@ from cookieless.config import DEFAULT_SETTINGS
 
 class BaseFuncTestCase(TestCase):
     """
-    Utitlity methods to pull stuff out of session etc.
+    Utility methods to pull values out of sessions.
     """
 
     def setUp(self):
-        """ Turn of HOSTS check and setup reusable attributes """
+        """Turn off host checks and set reusable attributes."""
         self.settings = getattr(settings, "COOKIELESS", DEFAULT_SETTINGS)
         self.settings["HOSTS"] = []
         self.browser = Client()
@@ -50,13 +50,13 @@ class BaseFuncTestCase(TestCase):
             )
             try:
                 session_key = self.crypt_sesh.decrypt(request, session_id)
-            except:
+            except Exception:
                 # Silently start new session in case fake session_id format causes error
                 pass
         else:
             session_id = ""
         try:
             session = self.engine.SessionStore(session_key)
-        except:
+        except Exception:
             session = self.engine.SessionStore()
         return session, session_id

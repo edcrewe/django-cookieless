@@ -2,6 +2,7 @@
 
 from django.views.generic import TemplateView
 from django.http import HttpResponse
+from django.http import HttpResponseRedirect
 import datetime
 from django.utils.html import mark_safe
 from cookieless.cryptsession import CryptSession
@@ -35,6 +36,40 @@ def my_plain_view(request):
     return HttpResponse(html)
 
 
+def my_cookie_view(request):
+    """Undecorated view to exercise standard session middleware behaviour."""
+    request.session["cookieview"] = "my_cookie_view"
+    return HttpResponse("<html><body><h1>Cookie view</h1></body></html>")
+
+
+def my_redirect_same_host_view(request):
+    """Redirect to same host for cookieless URL rewrite checks."""
+    return HttpResponseRedirect("http://localhost/index.html")
+
+
+def my_redirect_other_host_view(request):
+    """Redirect to other host to ensure cookieless does not rewrite it."""
+    return HttpResponseRedirect("http://example.org/index.html")
+
+
+def my_binary_view(request):
+    """Binary response used to verify rewrite safety for non-HTML payloads."""
+    return HttpResponse(
+        b"\xff\xfe\xfd\x00binary-cookieless-data", content_type="application/octet-stream"
+    )
+
+
+def my_link_rewrite_view(request):
+    """Mixed link content used to test rewrite behaviour."""
+    html = "<html><body>"
+    html += '<a href="/function-view.html#frag">One</a>'
+    html += '<a href="/function-view.html?foo=bar#frag2">Two</a>'
+    html += '<a data-href="/not-a-link" href="/index.html">Three</a>'
+    html += '<span href="/not-rewritten">Span</span>'
+    html += "</body></html>"
+    return HttpResponse(html)
+
+
 class MyClassView(TemplateView):
     """ Test class view - with form """
 
@@ -47,10 +82,10 @@ class MyClassView(TemplateView):
         request.session[
             datetime.datetime.now().strftime("%m/%d/%Y-%H:%M:%S")
         ] = "refresh"
-        return super(MyClassView, self).dispatch(*args, **kwargs)
+        return super().dispatch(*args, **kwargs)
 
     def get_context_data(self, **kwargs):
-        context = super(MyClassView, self).get_context_data(**kwargs)
+        context = super().get_context_data(**kwargs)
         context["session_data"] = session_data(self.request)
         return context
 
@@ -59,6 +94,6 @@ class MyClassView(TemplateView):
             or they throw django.http.HttpResponseNotAllowed and wipe response.content
             (Or at least they do for the test browser)
         """
-        context = super(MyClassView, self).get_context_data(**kwargs)
+        context = super().get_context_data(**kwargs)
         context["session_data"] = session_data(self.request)
         return self.render_to_response(context)

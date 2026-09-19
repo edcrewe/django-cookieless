@@ -1,5 +1,5 @@
 """ Constants for cookieless """
-LINKS_RE = r'<a(?P<pre_href>[^>]*?)href=["\'](?P<in_href>[^"\']*?)(?P<anchor>#\S+)?["\'](?P<post_href>[^>]*?)>'
+LINKS_RE = r'<a(?P<pre_href>[^>]*?\s)href=["\'](?P<in_href>[^"\']*?)(?P<anchor>#\S+)?["\'](?P<post_href>[^>]*?)>'
 
 DEFAULT_SETTINGS = {
     "REWRITE": True,
