@@ -77,19 +77,17 @@ browsers.
 To install add the package via pip or other build tool, for example:
 
 ```bash
-bin/pip install django-cookieless
+python -m pip install django-cookieless
 ```
 
 Then replace the standard session middleware in your settings:
 
 ```python
-MIDDLEWARE = (
-    "django.middleware.gzip.GZipMiddleware",
-    "django.middleware.common.CommonMiddleware",
-    "django.middleware.transaction.TransactionMiddleware",
+MIDDLEWARE = [
     # "django.contrib.sessions.middleware.SessionMiddleware",
     "cookieless.middleware.CookielessSessionMiddleware",
-)
+    ...
+]
 ```
 
 The following settings control behaviour, see the example settings file.
@@ -157,13 +155,13 @@ run the functional tests against.
 To run the tests, you may want to install from source, or your branch:
 
 ```bash
-bin/pip install -e git+https://github.com/edcrewe/django-cookieless#egg=django-cookieless
+python -m pip install -e .
 ```
 
 Then run via:
 
 ```bash
-bin/django-admin.py or manage.py test cookieless.tests --settings=cookieless.tests.settings
+python -m django test cookieless.tests --settings=cookieless.tests.settings
 ```
 
 The package was changed from a namespace package due to the issue with pip not

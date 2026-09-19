@@ -47,10 +47,10 @@ class MyClassView(TemplateView):
         request.session[
             datetime.datetime.now().strftime("%m/%d/%Y-%H:%M:%S")
         ] = "refresh"
-        return super(MyClassView, self).dispatch(*args, **kwargs)
+        return super().dispatch(*args, **kwargs)
 
     def get_context_data(self, **kwargs):
-        context = super(MyClassView, self).get_context_data(**kwargs)
+        context = super().get_context_data(**kwargs)
         context["session_data"] = session_data(self.request)
         return context
 
@@ -59,6 +59,6 @@ class MyClassView(TemplateView):
             or they throw django.http.HttpResponseNotAllowed and wipe response.content
             (Or at least they do for the test browser)
         """
-        context = super(MyClassView, self).get_context_data(**kwargs)
+        context = super().get_context_data(**kwargs)
         context["session_data"] = session_data(self.request)
         return self.render_to_response(context)

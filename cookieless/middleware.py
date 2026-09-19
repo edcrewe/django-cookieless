@@ -83,12 +83,12 @@ class CookielessSessionMiddleware:
 
         try:
             request.session = self.SessionStore(session_key)
-        except:
+        except Exception:
             pass
         # NB: engine may work but return empty key less session
         try:
             session_key = request.session.session_key
-        except:
+        except Exception:
             session_key = ""
 
         # If the session_key isn't tied to a session - create a new one
@@ -200,7 +200,7 @@ class CookielessSessionMiddleware:
                     response.content = self._re_links.sub(
                         new_url, response.content.decode()
                     ).encode()
-                except:
+                except Exception:
                     pass
 
             # Check in case response has already got a manual session_id inserted
@@ -218,10 +218,10 @@ class CookielessSessionMiddleware:
                     response.content = self._re_forms.sub(
                         repl_form, response.content.decode()
                     ).encode()
-                except:
+                except Exception:
                     pass
-            response['Content-Length'] = len(response.content);
+            response["Content-Length"] = len(response.content)
             return response
         else:
-            response['Content-Length'] = len(response.content);
+            response["Content-Length"] = len(response.content)
             return response

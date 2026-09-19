@@ -49,9 +49,9 @@ class CryptTestCase(unittest.TestCase):
 
     def test_hosts_check(self):
         self.settings["CLIENT_ID"] = False
+        self.settings["HOSTS"] = ["localhost"]
         request = self.factory.get("/")
         request.META["HTTP_REFERER"] = "http://localhost:12345/foobar"
-        settings.COOKIELESS_HOSTS = ["localhost"]
         keys = self.crypt_ok(request)
         self.assertEqual(*keys)
 

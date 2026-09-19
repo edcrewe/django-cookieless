@@ -44,7 +44,7 @@ register.tag("session_token", session_form)
 
 class URLSessionNode(BaseSessionNode):
     def __init__(self, url):
-        super(URLSessionNode, self).__init__()
+        super().__init__()
         self.url = self._sesh.prepare_url(url.replace('"', ""))
 
     def render(self, context):
