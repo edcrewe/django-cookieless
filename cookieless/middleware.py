@@ -41,7 +41,7 @@ class CookielessSessionMiddleware:
         self._re_forms = re.compile("</form>", re.I)
         self._re_body = re.compile("</body>", re.I)
         self._sesh = CryptSession()
-        self.standard_session = SessionMiddleware()
+        self.standard_session = SessionMiddleware(lambda req: None)
 
         self.get_response = get_response
         engine = import_module(settings.SESSION_ENGINE)
@@ -103,8 +103,8 @@ class CookielessSessionMiddleware:
 
     def session_save(self, session):
         """Ensure all keys are strings - required by move to JSON serializer with 1.6"""
-        for key in session.keys():
-            if type(key) not in (type(""), type(u""), type(True)):
+        for key in list(session.keys()):
+            if not isinstance(key, str):
                 session[str(key)] = str(session[key])
                 del session[key]
         session.save()
