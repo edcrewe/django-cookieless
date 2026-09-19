@@ -52,6 +52,24 @@ def my_redirect_other_host_view(request):
     return HttpResponseRedirect("http://example.org/index.html")
 
 
+def my_binary_view(request):
+    """Binary response used to verify rewrite safety for non-HTML payloads."""
+    return HttpResponse(
+        b"\xff\xfe\xfd\x00binary-cookieless-data", content_type="application/octet-stream"
+    )
+
+
+def my_link_rewrite_view(request):
+    """Mixed link content used to test rewrite behaviour."""
+    html = "<html><body>"
+    html += '<a href="/function-view.html#frag">One</a>'
+    html += '<a href="/function-view.html?foo=bar#frag2">Two</a>'
+    html += '<a data-href="/not-a-link" href="/index.html">Three</a>'
+    html += '<span href="/not-rewritten">Span</span>'
+    html += "</body></html>"
+    return HttpResponse(html)
+
+
 class MyClassView(TemplateView):
     """ Test class view - with form """
 

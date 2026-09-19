@@ -128,14 +128,15 @@ class CookielessSessionMiddleware:
                         request.session["no_cookies"] = True
                         request.session["created_cookieless"] = True
                         self.session_save(request.session)
-                if self.settings.get("DELETE_COOKIES", False):
-                    # Blat any existing cookies
-                    for key in request.COOKIES.keys():
-                        response.delete_cookie(key)
 
             # Dont set any new cookies
             if hasattr(response, "cookies"):
                 response.cookies.clear()
+
+            if request.COOKIES and self.settings.get("DELETE_COOKIES", False):
+                # Explicitly expire incoming cookies for this response.
+                for key in request.COOKIES.keys():
+                    response.delete_cookie(key)
 
             # cookieless - do same as standard process response
             #              but dont set the cookie
@@ -195,31 +196,27 @@ class CookielessSessionMiddleware:
                 )
                 return return_str
 
-            if self.settings.get("USE_GET", False):
+            decoded_content = None
+            if hasattr(response, "content"):
                 try:
-                    response.content = self._re_links.sub(
-                        new_url, response.content.decode()
-                    ).encode()
-                except Exception:
-                    pass
+                    decoded_content = response.content.decode()
+                except UnicodeDecodeError:
+                    decoded_content = None
+
+            if self.settings.get("USE_GET", False) and decoded_content is not None:
+                decoded_content = self._re_links.sub(new_url, decoded_content)
+                response.content = decoded_content.encode()
 
             # Check in case response has already got a manual session_id inserted
             repl_form = '<input type="hidden" name="%s"' % name
-            if (
-                hasattr(response, "content")
-                and repl_form not in response.content.decode()
-            ):
+            if decoded_content is not None and repl_form not in decoded_content:
                 repl_form = """%s value="%s" />
                                </form>""" % (
                     repl_form,
                     session_key,
                 )
-                try:
-                    response.content = self._re_forms.sub(
-                        repl_form, response.content.decode()
-                    ).encode()
-                except Exception:
-                    pass
+                decoded_content = self._re_forms.sub(repl_form, decoded_content)
+                response.content = decoded_content.encode()
             response["Content-Length"] = len(response.content)
             return response
         else:
