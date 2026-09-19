@@ -7,6 +7,9 @@
 - Add optional `COOKIELESS["CIPHER_KEY"]` support, accepting either a direct
   Fernet key or a shared passphrase that is deterministically derived.
 - Add tests covering cipher-key derivation and override behavior.
+- Fix issue/6 by constraining URL rewriting, external links, `#` anchors,
+  `javascript:` links, and off-host protocol-relative URLs are no longer
+  rewritten, while same-host absolute and protocol-relative URLs still are.
 
 ## 1.3 - 19 Sep 2026
 
